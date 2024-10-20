@@ -5,18 +5,18 @@ class Volunteer(models.Model):
     name = models.CharField(max_length=255)
     school = models.CharField(max_length=255)
     major = models.CharField(max_length=255)
-    email = models.EmailField()
+    email = models.EmailField() # 需要以@sjtu.edu.cn结尾
     phone = models.CharField(max_length=20)
     password = models.CharField(max_length=255)  # 加密
     application_date = models.DateField()
-    labor_hours = models.IntegerField()
-    type_preference = models.IntegerField(default=0)
-    duration_preference = models.IntegerField(default=0)
+    labor_hours = models.IntegerField() # >= 0
+    type_preference = models.IntegerField(default=0) 
+    duration_preference = models.IntegerField(default=0) 
 
 class Organizer(models.Model):
     organizer_id = models.AutoField(primary_key=True)
-    organizer_name = models.CharField(max_length=255)
-    account = models.CharField(max_length=255)
+    organizer_name = models.CharField(max_length=255) 
+    account = models.CharField(max_length=255) 
     password = models.CharField(max_length=255)  # 加密
     application_date = models.DateField()
 
@@ -35,10 +35,10 @@ class Activity(models.Model):
     ])
     activity_image_path = models.CharField(max_length=255)
     application_requirements = models.TextField()
-    application_start_time = models.DateTimeField()
-    application_end_time = models.DateTimeField()
-    activity_start_time = models.DateTimeField()
-    activity_end_time = models.DateTimeField()
+    application_start_time = models.DateTimeField() # >= 当前时间
+    application_end_time = models.DateTimeField() # >= application_start_time
+    activity_start_time = models.DateTimeField() # >= application_end_time
+    activity_end_time = models.DateTimeField() # >= activity_start_time
     estimated_volunteer_hours = models.IntegerField()
     activity_location = models.CharField(max_length=255)
     contact_name = models.CharField(max_length=255)
@@ -81,6 +81,10 @@ class VolunteerActivity(models.Model):
         ('已参与', '已参与'),
         ('未参与', '未参与'),
         ('参与中', '参与中'),
+        ('已报名', '已报名'),
+        ('已录取', '已录取'),
+        ('未录取', '未录取'),
+        ('已取消', '已取消'),
     ])
     class Meta:
         unique_together = (('student', 'activity'),)

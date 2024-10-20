@@ -41,7 +41,7 @@
     python -m venv venv
     source venv/bin/activate  # 在Windows 上使venv\Scripts\activate
 3. 安装依赖：
-
+   
     ```bash
     pip install django djangorestframework mysqlclient django-cors-headers
 4. 配置数据库：在 volunteer_management/settings.py 中配置数据库连接：
@@ -62,8 +62,21 @@
     ```bash
     python manage.py makemigrations
     python manage.py migrate
-
 6. 启动 Django 开发服务器：
 
     ```bash
     python manage.py runserver
+### 前端搭建
+
+1. 环境要求
+   - Node.js (建议使用 LTS 版本)
+   - npm (Node 包管理器，随 Node.js 一起安装)
+2. 安装依赖
+
+    ```bash
+    # 在frontend文件夹内
+    npm install
+3. 运行开发服务器
+
+    ```bash
+    npm run serve
