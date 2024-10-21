@@ -1,6 +1,16 @@
-// Attention: Without backend
-// TODO1 : beatify the login page
-// TODO2 : add the login logic
+<!-- 
+    * @FileDescription: 登录页面组件，包含用户类型选择、账号密码输入、记住密码功能
+    * @Author: infinity 
+    * @Date: 2024-10-21 
+    * @LastEditors: infinity 
+    * @LastEditTime: 2024-10-21 
+    
+    Attention: Without backend
+
+    TODO:
+        1. 前端页面美化
+        2. 连接后端，添加登录逻辑
+ -->
 
 <template>
   <div class="login-container">
@@ -48,17 +58,39 @@ export default {
       userType: 'volunteer', // 默认选择为志愿者
     };
   },
+  created() {
+    this.username = localStorage.getItem('username');
+    if (localStorage.getItem('rememberMe') === 'true') {
+      this.password = localStorage.getItem('password');
+    }
+  },
   methods: {
+    /**
+     * @description 选择用户类型
+     * @param {string} type 用户类型（'volunteer' 或 'organizer'）
+     * @return {void}
+     */
     selectUserType(type) {
       this.userType = type;
     },
+    /**
+     * @description 登录方法，验证用户名和密码，并处理记住密码逻辑
+     * @return {void}
+     */
     login() {
       if (this.username === 'root' && this.password === 'passwd') {
-        // 登录成功的逻辑
+        //TODO 登录成功的逻辑
         console.log('登录成功');
+        if (this.rememberMe) {
+          localStorage.setItem('password', this.password);
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          localStorage.removeItem('password');
+          localStorage.removeItem('rememberMe');
+        }
         this.$router.push('/'); // 跳转到首页
       } else {
-        // 登录失败的逻辑
+        //TODO 登录失败的逻辑
         alert('账号或密码错误');
       }
     },
