@@ -1,19 +1,35 @@
+<!-- 
+    * @FileDescription: 首页视图组件，包含导航栏，轮播图，推荐列表，活动视图
+    * @Author: infinity
+    * @Date: 2024-10-21 
+    * @LastEditors: infinity 
+    * @LastEditTime: 2024-10-21 
+ -->
+
 <template>
   <div>
-    <h1>欢迎来到志愿者管理系统</h1>
-    <button @click="logout">注销</button>
+    <NavBar />
+    <div class="home-container">
+      <BannerComponent />
+    </div>
   </div>
 </template>
 
 <script>
+import NavBar from '@/components/NavBar.vue';  
+import BannerComponent from '@/components/Banner.vue';
+
 export default {
   name: 'HomeView',
-  methods: {
-    logout() {
-      localStorage.removeItem('token'); // 清除 token
-      this.$router.push('/login'); // 跳转到登录页面
-    },
+  components: {
+    NavBar,
+    BannerComponent,
   },
 };
 </script>
 
+<style scoped>
+.home-container {
+  padding-top: 80px; /* 给内容留出导航栏的高度 */
+}
+</style>
