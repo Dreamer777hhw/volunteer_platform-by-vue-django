@@ -40,7 +40,7 @@ export default {
   data() {
     return {
       images: [
-        // TODO: 选择合适的分辨率图片
+        // TODO: 选择合适的分辨率图片 从后端获取相应的数据
         { name: 'banner-1.jpg', alt: 'Banner 1', link: '/activity/detail/ABCDEFG' },
         { name: 'banner-2.jpg', alt: 'Banner 2', link: '/activity/detail/HIJKLMN' },
         { name: 'banner-3.jpg', alt: 'Banner 3', link: '/activity/detail/OPQRSTU' },

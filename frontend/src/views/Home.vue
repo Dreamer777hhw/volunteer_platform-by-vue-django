@@ -11,6 +11,7 @@
     <NavBar />
     <div class="home-container">
       <BannerComponent />
+      <RecommendComponent />
     </div>
   </div>
 </template>
@@ -18,12 +19,14 @@
 <script>
 import NavBar from '@/components/NavBar.vue';  
 import BannerComponent from '@/components/Banner.vue';
+import RecommendComponent from '@/components/Recommend.vue';
 
 export default {
   name: 'HomeView',
   components: {
     NavBar,
     BannerComponent,
+    RecommendComponent,
   },
 };
 </script>
