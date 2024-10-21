@@ -81,6 +81,11 @@ export default {
       if (this.username === 'root' && this.password === 'passwd') {
         //TODO 登录成功的逻辑
         console.log('登录成功');
+        localStorage.setItem('username', this.username);
+        //TODO 从后端获取 token
+        const token = 'your-authentication-token';
+        localStorage.setItem('token', token);
+        
         if (this.rememberMe) {
           localStorage.setItem('password', this.password);
           localStorage.setItem('rememberMe', 'true');
