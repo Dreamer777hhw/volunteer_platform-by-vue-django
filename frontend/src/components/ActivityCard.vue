@@ -1,17 +1,19 @@
 <!-- 
     * @FileDescription: 活动卡片组件，显示活动的图片、标题、主办方、报名人数、报名时间、地点和活动时间
     * @Author: infinity
-    * @Date: 2024-10-21 
+    * @Date: 2024-10-22
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-21 
+    * @LastEditTime: 2024-10-22 
  -->
 
 <template>
   <div class="activity-card">
+    <!-- TODO 上图下字 -> 左图右字 -->
     <img :src="activity.image" alt="活动图片" class="activity-image">
     <div class="activity-info">
       <h3>{{ activity.title }}</h3>
       <p>主办方: {{ activity.host }}</p>
+      <p>标签： {{ activity.label }}</p>
       <p>报名人数: {{ activity.participants }}</p>
       <p>报名时间: {{ activity.registrationPeriod }}</p>
       <p>地点: {{ activity.location }}</p>
@@ -40,12 +42,14 @@ export default {
 <style scoped>
 /* TODO 调整卡片样式 */
 .activity-card {
-  width: 30%;
+  width: 400px; 
+  height: 250px; 
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: left;
   overflow: hidden;
+  margin: 10px; 
 }
 
 .activity-image {

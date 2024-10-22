@@ -1,35 +1,37 @@
 <!-- 
     * @FileDescription: 轮播图组件，包含图片轮播、左右切换按钮和指示点功能
     * @Author: infinity
-    * @Date: 2024-10-21 
+    * @Date: 2024-10-22 
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-21 
+    * @LastEditTime: 2024-10-22 
  -->
 
 <template>
-  <div class="banner">
-    <!-- 图片轮播 -->
-    <div class="banner-images">
-      <img
-        v-for="(image, index) in images"
-        :key="index"
-        :src="`/banner-images/2024-10-21-1/${image.name}`"
-        :alt="image.alt"
-        :class="{ active: currentImage === index }"
-        @click="navigateToDetail(image.link)"
-      />
-      <!-- 左右切换按钮 -->
-      <button class="prev" @click="prevImage">‹</button>
-      <button class="next" @click="nextImage">›</button>
-    </div>
-    <!-- 指示点 -->
-    <div class="banner-dots">
-      <span
-        v-for="(image, index) in images"
-        :key="index"
-        :class="{ active: currentImage === index }"
-        @click="goToImage(index)"
-      ></span>
+  <div class="banner-container">
+    <div class="banner">
+      <!-- 图片轮播 -->
+      <div class="banner-images">
+        <img
+          v-for="(image, index) in images"
+          :key="index"
+          :src="`/banner-images/2024-10-21-1/${image.name}`"
+          :alt="image.alt"
+          :class="{ active: currentImage === index }"
+          @click="navigateToDetail(image.link)"
+        />
+        <!-- 左右切换按钮 -->
+        <button class="prev" @click="prevImage">‹</button>
+        <button class="next" @click="nextImage">›</button>
+      </div>
+      <!-- 指示点 -->
+      <div class="banner-dots">
+        <span
+          v-for="(image, index) in images"
+          :key="index"
+          :class="{ active: currentImage === index }"
+          @click="goToImage(index)"
+        ></span>
+      </div>
     </div>
   </div>
 </template>
@@ -111,13 +113,22 @@ export default {
 </script>
 
 <style scoped>
+.banner-container {
+  justify-content: center;
+}
+
 .banner {
   position: relative;
-  margin: 0 auto;
-  width: 1200px;
   height: 330px;
+  width: 1200px;
   overflow: hidden;
   border-radius: 15px; 
+}
+
+.banner-images {
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
 
 .banner-images img {
@@ -131,6 +142,14 @@ export default {
 
 .banner-images img.active {
   display: block;
+}
+
+.banner-images img.active {
+  opacity: 1;
+}
+
+.banner-images img:not(.active) {
+  opacity: 0;
 }
 
 .banner button {
