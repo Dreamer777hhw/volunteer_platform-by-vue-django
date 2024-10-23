@@ -1,3 +1,11 @@
+<!-- 
+    * @FileDescription: Information 视图组件，展示用户的活动信息 
+    * @Author: infinity
+    * @Date: 2024-10-23 
+    * @LastEditors: infinity 
+    * @LastEditTime: 2024-10-23
+ -->
+
 <template>
   <div>
     <NavBar />
@@ -9,7 +17,6 @@
         </ul>
       </div>
       <div class="content">
-        <!-- 筛选部分 -->
         <div class="filter-bar">
           <div class="filter-dropdown">
             <select v-model="selectedStatus" @change="filterByStatus">
@@ -29,14 +36,12 @@
           </div>
         </div>
 
-        <!-- 活动表头 -->
         <div class="activity-table-header">
           <span>活动名称</span>
           <span>主办方</span>
           <span>状态</span>
         </div>
 
-        <!-- 活动卡片 -->
         <div class="activity-list">
           <div v-for="activity in paginatedActivities" :key="activity.title" class="activity-row">
             <ActivityCard :activity="activity" />
@@ -44,8 +49,7 @@
             <span>{{ activity.status }}</span>
           </div>
         </div>
-
-        <!-- 分页 -->
+<!-- TODO 分页操作 -->
         <el-pagination
           layout="prev, pager, next"
           :page-size="activitiesPerPage"
@@ -123,24 +127,24 @@ export default {
     }
   },
   methods: {
-    /**
-     * @description 根据状态筛选活动
-     * @param {Event} event - 事件对象
+    /** 
+     * @description 根据状态筛选活动 
+     * @param {Event} event - 事件对象 
      * @return {void}
      */
     filterByStatus(event) {
       this.selectedStatus = event.target.value
       this.applyFilters()
     },
-    /**
-     * @description 搜索活动
+    /** 
+     * @description 搜索活动 
      * @return {void}
      */
     searchActivities() {
       this.applyFilters()
     },
-    /**
-     * @description 应用筛选条件
+    /** 
+     * @description 应用筛选条件 
      * @return {void}
      */
     applyFilters() {
@@ -156,9 +160,9 @@ export default {
         return matchesSearch && matchesStatus
       })
     },
-    /**
-     * @description 处理分页变化
-     * @param {number} page - 当前页码
+    /** 
+     * @description 处理分页变化 
+     * @param {number} page - 当前页码 
      * @return {void}
      */
     handlePageChange(page) {
@@ -166,9 +170,9 @@ export default {
     },
   },
   computed: {
-    /**
-     * @description 获取当前页的活动
-     * @return {Array} 当前页的活动列表
+    /** 
+     * @description 获取当前页的活动 
+     * @return {Array} 当前页的活动列表 
      */
     paginatedActivities() {
       const start = (this.currentPage - 1) * this.activitiesPerPage
@@ -183,6 +187,7 @@ export default {
 </script>
 
 <style scoped>
+/* TODO 样式调整 */
 .activities-container {
   display: flex;
   width: 80%;
@@ -239,7 +244,6 @@ export default {
 } 
 .activity-row {
   display: flex;
-  /* justify-content: space-between; */
   align-items: center;
   padding: 10px;
   border-bottom: 1px solid #ddd;
