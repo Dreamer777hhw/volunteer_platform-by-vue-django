@@ -1,3 +1,18 @@
+<!--
+    * @FileDescription: 个人账户页面组件，包含学号、姓名、学院、专业、邮箱、手机号、密码等信息展示，以及修改信息、修改密码、注销账户等功能
+    * @Author: Dreamer777hhw
+    * @Date: 2024-10-23
+    * @LastEditors: Dreamer777hhw
+    * @LastEditTime: 2024-10-23
+    *
+
+    Attention: Without backend
+
+    TODO:
+        1. 前端页面美化
+        2. 连接后端
+
+ -->
 <template>
   <div class="account-container">
     <div class="account-card">
@@ -91,6 +106,10 @@ export default {
     };
   },
   methods: {
+    /**
+     * @description 信息修改
+     * @return {void}
+     */
     goToModifyInfo() {
       this.$router.push({
         path: '/modifyinfo',
@@ -103,9 +122,17 @@ export default {
         },
       }); // Navigate to the modify info page with user data
     },
+    /**
+     * @description 密码修改
+     * @return {void}
+     */
     goToModifyPassword() {
       this.$router.push('/modifypassword'); // Navigate to the modify password page
     },
+    /**
+     * @description 返回主页
+     * @return {void}
+     */
     logout() {
       // 处理注销账户逻辑
       alert('注销成功，正在返回主页...');

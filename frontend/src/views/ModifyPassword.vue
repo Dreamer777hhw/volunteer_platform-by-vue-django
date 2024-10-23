@@ -1,3 +1,18 @@
+<!--
+    * @FileDescription: 修改密码页面组件，包含新密码、确认新密码输入框，并进行相应的验证
+    * @Author: Dreamer777hhw
+    * @Date: 2024-10-23
+    * @LastEditors: Dreamer777hhw
+    * @LastEditTime: 2024-10-23
+    *
+
+    Attention: Without backend
+
+    TODO:
+        1. 前端页面美化
+        2. 链接后端
+
+ -->
 <template>
   <div class="modify-password-container">
     <div class="password-card">
@@ -27,6 +42,10 @@ export default {
     };
   },
   methods: {
+    /**
+     * @description 提交密码修改请求
+     * @return {void}
+     */
     submitPasswordChange() {
       if (this.newPassword !== this.confirmPassword) {
         this.passwordError = '两次输入的密码不一致！';
