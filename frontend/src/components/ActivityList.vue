@@ -156,27 +156,27 @@ export default {
      * @description 设置 IntersectionObserver 以检测用户是否滚动到底部
      * @return {void}
      */
-    setupIntersectionObserver() {
-      const options = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 1.0
-      };
+    // setupIntersectionObserver() {
+    //   const options = {
+    //     root: null,
+    //     rootMargin: '0px',
+    //     threshold: 1.0
+    //   };
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            this.loadMore();
-          }
-        });
-      }, options);
+    //   const observer = new IntersectionObserver((entries) => {
+    //     entries.forEach(entry => {
+    //       if (entry.isIntersecting) {
+    //         this.loadMore();
+    //       }
+    //     });
+    //   }, options);
 
-      observer.observe(this.$refs.loadMoreTrigger);
-    }
+    //   observer.observe(this.$refs.loadMoreTrigger);
+    // }
   },
   mounted() {
     this.loadMore(); // 初始加载活动
-    this.setupIntersectionObserver(); // 设置 IntersectionObserver
+    // this.setupIntersectionObserver(); // 设置 IntersectionObserver
   }
 };
 </script>

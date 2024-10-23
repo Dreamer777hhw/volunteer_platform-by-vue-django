@@ -2,7 +2,7 @@
     * @FileDescription: 修改信息页面组件，包含姓名、学院、专业、邮箱、手机号等输入框，并进行相应的验证
     * @Author: Dreamer777hhw
     * @Date: 2024-10-23
-    * @LastEditors: Dreamer777hhw
+    * @LastEditors: infinity
     * @LastEditTime: 2024-10-23
     *
 
@@ -14,6 +14,8 @@
 
  -->
 <template>
+<div>
+  <NavBar/>
   <div class="modify-info-container">
     <div class="info-card">
       <h2>修改信息</h2>
@@ -45,11 +47,16 @@
       <button @click="submitInfoChange">提交修改</button>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+import NavBar from '@/components/NavBar.vue';
 export default {
   name: 'ModifyInfoView',
+  components: {
+    NavBar,
+  },
   data() {
     return {
       editName: this.$route.query.name || '',
@@ -67,7 +74,7 @@ export default {
     submitInfoChange() {
       // Logic to submit modified info
       alert('信息修改成功！');
-      this.$router.push('/useraccount'); // Navigate back to the account page
+      this.$router.push('/account'); // Navigate back to the account page
     }
   }
 };
@@ -78,7 +85,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 90vh;
   background-color: #f0f2f5;
   padding: 2rem;
 }

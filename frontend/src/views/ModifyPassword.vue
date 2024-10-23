@@ -2,7 +2,7 @@
     * @FileDescription: 修改密码页面组件，包含新密码、确认新密码输入框，并进行相应的验证
     * @Author: Dreamer777hhw
     * @Date: 2024-10-23
-    * @LastEditors: Dreamer777hhw
+    * @LastEditors: infinity
     * @LastEditTime: 2024-10-23
     *
 
@@ -14,6 +14,8 @@
 
  -->
 <template>
+<div>
+  <NavBar/>
   <div class="modify-password-container">
     <div class="password-card">
       <h2 class="password-title">修改密码</h2>
@@ -29,11 +31,16 @@
       <p v-if="passwordError" class="error-message">{{ passwordError }}</p>
     </div>
   </div>
+</div>
 </template>
 
 <script>
+import NavBar from '@/components/NavBar.vue';
 export default {
   name: 'ModifyPasswordView',
+  components: {
+    NavBar,
+  },
   data() {
     return {
       newPassword: '',
@@ -59,7 +66,7 @@ export default {
 
       // 处理密码修改逻辑
       alert('密码修改成功！');
-      this.$router.push('/home'); // 修改成功后返回主页
+      this.$router.push('/'); // 修改成功后返回主页
     },
   },
 };
@@ -70,7 +77,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 90vh;
   background-color: #f0f2f5;
   padding: 2rem;
 }
