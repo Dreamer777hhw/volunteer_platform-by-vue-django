@@ -5,6 +5,7 @@ import RegisterView from '../views/Register.vue';
 import UserAccountView from "../views/UserAccount.vue";
 import ModifyPasswordView from "../views/ModifyPassword.vue";
 import ModifyInfoView from "../views/ModifyInfo.vue";
+import InformationView from "../views/Information.vue";
 
 const routes = [
   {
@@ -37,6 +38,11 @@ const routes = [
     path: '/modifyinfo',
     name: 'ModifyInfo',
     component: ModifyInfoView,
+  },
+  {
+    path: '/information',
+    name: 'Information',
+    component: InformationView,
   }
 ];
 
