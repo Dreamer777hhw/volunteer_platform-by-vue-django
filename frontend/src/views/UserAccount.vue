@@ -1,8 +1,8 @@
 <!--
     * @FileDescription: 个人账户页面组件，包含学号、姓名、学院、专业、邮箱、手机号、密码等信息展示，以及修改信息、修改密码、注销账户等功能
     * @Author: Dreamer777hhw
-    * @Date: 2024-10-23
-    * @LastEditors: Dreamer777hhw
+    * @Date: 2024-10-22
+    * @LastEditors: infinity
     * @LastEditTime: 2024-10-23
     *
 
@@ -14,6 +14,8 @@
 
  -->
 <template>
+<div>
+  <NavBar/>
   <div class="account-container">
     <div class="account-card">
       <h2 class="account-title">个人账户</h2>
@@ -79,11 +81,16 @@
     <button class='change-password-button' @click="goToModifyInfo">修改信息</button>
     <button @click="logout" class="logout-button">注销账户</button>
   </div>
+</div>
 </template>
 
 <script>
+import NavBar from '@/components/NavBar.vue';
 export default {
   name: 'UserAccountView',
+  components: {
+    NavBar,
+  },
   data() {
     return {
       studentId: '123456',
@@ -135,6 +142,7 @@ export default {
      */
     logout() {
       // 处理注销账户逻辑
+      localStorage.removeItem('token');
       alert('注销成功，正在返回主页...');
       this.$router.push('/'); // 返回主页
     }
@@ -144,12 +152,12 @@ export default {
 
 <style scoped>
 .account-container {
+  padding-top: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
   background-color: #f0f2f5;
-  padding: 2rem;
+  height: 85vh;
 }
 
 .account-card {
