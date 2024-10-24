@@ -7,6 +7,7 @@ import ModifyPasswordView from "../views/ModifyPassword.vue";
 import ModifyInfoView from "../views/ModifyInfo.vue";
 import InformationView from "../views/Information.vue";
 import CreateActivityView from "../views/CreateActivity.vue";
+import ReviseActivityView from "../views/ReviseActivity.vue"; // 新增导入
 
 const routes = [
   {
@@ -49,6 +50,12 @@ const routes = [
     path: '/activity/create',
     name: 'CreateActivity',
     component: CreateActivityView,
+  },
+  {
+    path: '/activity/revise/:activity_id_hash',
+    name: 'ReviseActivity',
+    component: ReviseActivityView,
+    props: true, // 传递路由参数作为组件的 props
   }
 ];
 
