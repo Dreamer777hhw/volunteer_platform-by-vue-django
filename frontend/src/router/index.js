@@ -7,7 +7,8 @@ import ModifyPasswordView from "../views/ModifyPassword.vue";
 import ModifyInfoView from "../views/ModifyInfo.vue";
 import InformationView from "../views/Information.vue";
 import CreateActivityView from "../views/CreateActivity.vue";
-import ReviseActivityView from "../views/ReviseActivity.vue"; // 新增导入
+import ReviseActivityView from "../views/ReviseActivity.vue"; 
+import CheckVolunteerView from "../views/CheckVolunteer.vue";
 
 const routes = [
   {
@@ -30,32 +31,45 @@ const routes = [
     path: '/account',
     name: 'UserAccount',
     component: UserAccountView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/modifypassword',
     name: 'ModifyPassword',
     component: ModifyPasswordView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/modifyinfo',
     name: 'ModifyInfo',
     component: ModifyInfoView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/information',
     name: 'Information',
     component: InformationView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/activity/create',
     name: 'CreateActivity',
     component: CreateActivityView,
+    meta: { requiresAuth: true },
   },
   {
     path: '/activity/revise/:activity_id_hash',
     name: 'ReviseActivity',
     component: ReviseActivityView,
     props: true, // 传递路由参数作为组件的 props
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/activity/check/:activity_id_hash',
+    name: 'CheckVolunteer',
+    component: CheckVolunteerView,
+    props: true, // 传递路由参数作为组件的 props
+    meta: { requiresAuth: true },
   }
 ];
 

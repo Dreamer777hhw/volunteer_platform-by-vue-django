@@ -216,7 +216,7 @@ export default {
 </script>
 
 <style scoped>
-
+/* TODO 修改样式 */
 .create-activity-container {
   background-color: #f0f2f5;
   display: flex;
