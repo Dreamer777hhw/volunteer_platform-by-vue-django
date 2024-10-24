@@ -6,6 +6,7 @@ import UserAccountView from "../views/UserAccount.vue";
 import ModifyPasswordView from "../views/ModifyPassword.vue";
 import ModifyInfoView from "../views/ModifyInfo.vue";
 import InformationView from "../views/Information.vue";
+import CreateActivityView from "../views/CreateActivity.vue";
 
 const routes = [
   {
@@ -43,6 +44,11 @@ const routes = [
     path: '/information',
     name: 'Information',
     component: InformationView,
+  },
+  {
+    path: '/activity/create',
+    name: 'CreateActivity',
+    component: CreateActivityView,
   }
 ];
 
