@@ -163,21 +163,21 @@ export default {
   },
   data() {
     return {
-      activityId: 'fixed_hash_value', // 写死一个固定的哈希值，方便测试
+      activityId: 'fixed_hash_value', 
       activityName: '旋律欣赏活动',
       activityDescription: '欣赏旋律，感受悦动',
       activityTag: '文体活动',
       applicationRequirements: '热爱音乐的非艺术学院音乐相关专业学生',
-      applicationStartTime: '2024-10-01T09:00', // 示例值
-      applicationEndTime: '2024-10-10T18:00', // 示例值
-      activityStartTime: '2024-10-15T09:00', // 示例值
-      activityEndTime: '2024-10-15T18:00', // 示例值
-      volunteerHours: 8, // 示例值
+      applicationStartTime: '2024-10-01T09:00', 
+      applicationEndTime: '2024-10-10T18:00', 
+      activityStartTime: '2024-10-15T09:00', 
+      activityEndTime: '2024-10-15T18:00', 
+      volunteerHours: 8, 
       activityLocation: '音乐厅',
       contactName: '张三',
       contactPhone: '1234567890',
-      acceptedVolunteers: 50, // 示例值
-      laborHours: 4, // 示例值
+      acceptedVolunteers: 50, 
+      laborHours: 4, 
       sutuo: '素拓活动',
       notes: '请准时参加活动',
       activityTags: {
@@ -197,6 +197,10 @@ export default {
     this.fetchActivityDetails();
   },
   methods: {
+    /** 
+     * @description 获取活动详情 
+     * @return {void}
+     */
     fetchActivityDetails() {
       // TODO: 根据 activityId 获取活动详情
       // 例如：axios.get(`/api/activities/${this.activityId}`).then(response => {
@@ -219,6 +223,11 @@ export default {
       //   this.notes = activity.notes;
       // });
     },
+    /** 
+     * @description 上传图片 
+     * @param {Event} event - 文件选择事件 
+     * @return {void}
+     */
     uploadPic(event) {
       const file = event.target.files[0];
       const formData = new FormData();
@@ -226,6 +235,10 @@ export default {
       // TODO 上传图片逻辑
       // 例如：axios.post('/upload', formData)
     },
+    /** 
+     * @description 修改活动 
+     * @return {void}
+     */
     reviseActivity() {
       // TODO 修改活动逻辑
       // 例如：axios.put(`/api/activities/${this.activityId}`, { ... })
