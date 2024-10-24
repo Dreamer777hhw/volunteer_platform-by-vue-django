@@ -9,6 +9,7 @@ import InformationView from "../views/Information.vue";
 import CreateActivityView from "../views/CreateActivity.vue";
 import ReviseActivityView from "../views/ReviseActivity.vue"; 
 import CheckVolunteerView from "../views/CheckVolunteer.vue";
+import ActivityDetail from "../views/ActivityDetail.vue";
 
 const routes = [
   {
@@ -68,6 +69,13 @@ const routes = [
     path: '/activity/check/:activity_id_hash',
     name: 'CheckVolunteer',
     component: CheckVolunteerView,
+    props: true, // 传递路由参数作为组件的 props
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/activity/detail/:activity_id_hash',
+    name: 'ActivityDetail',
+    component: ActivityDetail,
     props: true, // 传递路由参数作为组件的 props
     meta: { requiresAuth: true },
   }
