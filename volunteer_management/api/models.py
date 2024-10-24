@@ -76,7 +76,7 @@ SCHOOL_CHOICES = [
 
 
 class Volunteer(models.Model):
-    student_id = models.CharField(max_length=255, primary_key=True)
+    student_id = models.CharField(max_length=255, primary_key=True) # 12位数字
     name = models.CharField(max_length=255)
     school = models.CharField(max_length=50, choices=SCHOOL_CHOICES)
     major = models.CharField(max_length=255)
@@ -84,7 +84,7 @@ class Volunteer(models.Model):
     phone = models.CharField(max_length=20)
     password = models.CharField(max_length=255)  # 加密
     application_date = models.DateField()
-    labor_hours = models.IntegerField() # >= 0
+    labor_hours = models.IntegerField(default=0) 
     type_preference = models.IntegerField(default=0) 
     duration_preference = models.IntegerField(default=0) 
 
