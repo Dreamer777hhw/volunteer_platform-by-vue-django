@@ -4,7 +4,6 @@
     * @Date: 2024-10-24 
     * @LastEditors: infinity 
     * @LastEditTime: 2024-10-24
-
  -->
 
 <template>
@@ -192,6 +191,11 @@ export default {
     };
   },
   methods: {
+    /** 
+     * @description 上传图片 
+     * @param {Event} event - 文件选择事件 
+     * @return {void}
+     */
     uploadPic(event) {
       const file = event.target.files[0];
       const formData = new FormData();
@@ -199,6 +203,10 @@ export default {
       // TODO 上传图片逻辑
       // 例如：axios.post('/upload', formData)
     },
+    /** 
+     * @description 创建活动 
+     * @return {void}
+     */
     createActivity() {
       // TODO 创建活动逻辑
       // 例如：axios.post('/api/activities', { ... })
