@@ -5,11 +5,11 @@ from pymysql import MySQLError
 
 # MySQL 连接信息
 db_config = {
-    'user': 'dreamer',
-    'password': 'dreamer2019',
+    'user': 'root',
+    'password': 'passwd',
     'host': 'localhost',  # 修改为你的 MySQL 服务器地址
     'port': 3306,
-    'database': 'volunteer'
+    'database': 'volunteer_management',
 }
 
 SCHOOL_CHOICES = [
@@ -86,6 +86,11 @@ SCHOOL_CHOICES = [
     ('新农村发展研究院（农业与生物学院）', '新农村发展研究院（农业与生物学院）')
 ]
 
+activity_ids = []  # 保存已插入的活动 ID
+student_ids = []  # 保存已插入的志愿者 ID
+volunteer_phones = []  # 保存已插入的志愿者手机号
+organizer_ids = []  # 保存已插入的组织者 ID
+
 
 def random_date():
     # 生成去年今天到今年今天之间的随机日期
@@ -95,11 +100,15 @@ def random_date():
 
 def create_random_volunteer():
     student_id = f"522{random.randint(100000000, 999999999):09d}"  # 以522开头的12位学号
+    while student_id in student_ids:
+        student_id = f"522{random.randint(100000000, 999999999):09d}"
     name = f"Volunteer{student_id}"
     school = random.choice([choice[0] for choice in SCHOOL_CHOICES])  # 随机选择学校
     major = f"Major{random.randint(1, 10)}"
     email = f"{student_id}@sjtu.edu.cn"
     phone = f"138{random.randint(10000000, 99999999)}"  # 假设手机号
+    while phone in volunteer_phones:
+        phone = f"138{random.randint(10000000, 99999999)}"
 
     # 生成随机密码（6位数字）
     password = f"{random.randint(100000, 999999)}"
@@ -108,6 +117,7 @@ def create_random_volunteer():
     application_date = random_date()
 
     labor_hours = random.randint(0, 100)
+    # TODO 调整偏好 float & randint
     type_preference = random.randint(0, 5)
     duration_preference = random.randint(0, 5)
 
@@ -117,6 +127,8 @@ def create_random_volunteer():
 
 def create_random_organizer():
     organizer_id = f"{random.randint(100000, 999999)}"  # 六位随机数字作为 ID
+    while organizer_id in organizer_ids:
+        organizer_id = f"{random.randint(100000, 999999)}"
     organizer_name = f"Organizer{organizer_id}"
     account = f"account_{organizer_name}"
 
@@ -130,6 +142,8 @@ def create_random_organizer():
 
 def create_random_activity(organizer_id):
     activity_id = f"{random.randint(100000, 999999)}"  # 六位随机数字作为 ID
+    while activity_id in activity_ids:
+        activity_id = f"{random.randint(100000, 999999)}"
     activity_name = f"Activity{activity_id}"
     activity_description = "This is a test activity description."
     activity_tags = random.choice(['讲坛讲座', '志愿公益', '劳动教育', '文体活动', '实习实践', '学习培训', '科创活动'])
@@ -176,11 +190,14 @@ def insert_data():
         # 插入随机志愿者
         for i in range(50):
             volunteer_data = create_random_volunteer()
+            student_ids.append(volunteer_data[0])
+            volunteer_phones.append(volunteer_data[5])
             cursor.execute("INSERT INTO api_volunteer (student_id, name, school, major, email, phone, password, application_date, labor_hours, type_preference, duration_preference) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", volunteer_data)
 
         # 插入随机组织者
         for i in range(10):
             organizer_data = create_random_organizer()
+            organizer_ids.append(organizer_data[0])
             cursor.execute("INSERT INTO api_organizer (organizer_id, organizer_name, account, password, application_date) VALUES (%s, %s, %s, %s, %s)", organizer_data)
             db.commit()  # 在这里提交，确保组织者 ID 正确
             organizer_id = organizer_data[0]  # 获取组织者 ID
@@ -188,6 +205,7 @@ def insert_data():
             # 插入随机活动
             for j in range(random.randint(1, 5)):
                 activity_data = create_random_activity(organizer_id)  # 使用组织者 ID
+                activity_ids.append(activity_data[0])
                 cursor.execute("INSERT INTO api_activity (activity_id, activity_name, activity_description, activity_tags, activity_image_path, application_requirements, application_start_time, application_end_time, activity_start_time, activity_end_time, estimated_volunteer_hours, activity_location, contact_name, contact_phone, organizer_id, accepted_volunteers, labor_hours, sutuo, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", activity_data)
                 db.commit()
 
