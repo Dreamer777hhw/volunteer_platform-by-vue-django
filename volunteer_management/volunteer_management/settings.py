@@ -43,6 +43,15 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+    )
+}
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
@@ -88,9 +97,9 @@ WSGI_APPLICATION = "volunteer_management.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'volunteer_management',
-        'USER': 'root',
-        'PASSWORD': 'passwd',
+        'NAME': 'volunteer',
+        'USER': 'dreamer',
+        'PASSWORD': 'dreamer2019',
         'HOST': 'localhost',
         'PORT': '3306',
     }
