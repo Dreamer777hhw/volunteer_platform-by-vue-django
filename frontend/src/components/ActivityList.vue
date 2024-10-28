@@ -1,9 +1,9 @@
-<!-- 
+<!--
     * @FileDescription: 活动列表组件，包含活动筛选、排序和展示功能
-    * @Author: infinity 
-    * @Date: 2024-10-22 
-    * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-22 
+    * @Author: infinity
+    * @Date: 2024-10-22
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-10-28
  -->
 
 <template>
@@ -16,13 +16,13 @@
         <input type="checkbox" v-model="selectedLabels" :value="label"> {{ label }}
       </label>
     </div>
-    
+
     <div class="filter-row">
       <label v-for="status in statuses" :key="status">
         <input type="checkbox" v-model="selectedStatuses" :value="status"> {{ status }}
       </label>
     </div>
-    
+
     <div class="filter-row">
       <input type="text" v-model="searchQuery" placeholder="搜索活动名称" />
       <select v-model="sortBy">
@@ -33,12 +33,12 @@
 
     <ActivityCardRow :activities="filteredActivities.slice(0,3)" />
     <!-- TODO 显示更多行卡片 -->
-
   </div>
 </template>
 
 <script>
 import ActivityCardRow from '@/components/ActivityCardRow.vue';
+import axios from 'axios';
 
 export default {
   name: "ActivityListComponent",
@@ -53,50 +53,7 @@ export default {
       selectedStatuses: [],
       searchQuery: "",
       sortBy: "time",
-      Activities: [
-        // 假设的静态活动数据
-        // TODO 从后端获取真实数据
-        {
-          image: 'activity-images/activity-11.jpg',
-          title: '旋律欣赏活动1',
-          host: '艺术学院',
-          label: '劳动教育',
-          participants: '60 / 60 人',
-          registrationPeriod: '2024-10-12 ~ 2024-10-23',
-          location: '图书馆',
-          activityPeriod: '2024-10-10 ~ 2024-10-21',
-        },
-        {
-          image: 'activity-images/activity-11.jpg',
-          title: '旋律欣赏活动2',
-          host: '艺术学院',
-          label: '文体活动',
-          participants: '60 / 60 人',
-          registrationPeriod: '2024-10-12 ~ 2024-10-23',
-          location: '图书馆',
-          activityPeriod: '2024-10-10 ~ 2024-10-21',
-        },
-        {
-          image: 'activity-images/activity-21.jpg',
-          title: '志愿招募活动',
-          host: '志愿者组织',
-          label: '志愿公益',
-          participants: '20 / 20 人',
-          registrationPeriod: '2024-10-10 ~ 2024-10-14',
-          location: '创新中心',
-          activityPeriod: '2024-10-11 ~ 2024-10-15',
-        },
-        {
-          image: 'activity-images/activity-21.jpg',
-          title: '科技创新活动',
-          host: '科技学院',
-          label: '科创活动',
-          participants: '30 / 30 人',
-          registrationPeriod: '2024-10-15 ~ 2024-10-20',
-          location: '科技园',
-          activityPeriod: '2024-10-21 ~ 2024-10-25',
-        },
-      ],
+      Activities: [],
       visibleActivities: [],
       itemsPerPage: 15,
       currentPage: 1,
@@ -143,6 +100,14 @@ export default {
       this.selectedLabels = [];
       this.selectedStatuses = [];
     },
+    async fetchActivities() {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/activities/');
+        this.Activities = response.data;
+      } catch (error) {
+        console.error('获取活动数据失败:', error);
+      }
+    },
     /**
      * @description 加载更多活动
      * @return {void}
@@ -176,6 +141,7 @@ export default {
   },
   mounted() {
     this.loadMore(); // 初始加载活动
+    this.fetchActivities();
     // this.setupIntersectionObserver(); // 设置 IntersectionObserver
   }
 };

@@ -8,16 +8,15 @@
 
 <template>
   <div class="activity-card">
-    <!-- TODO 上图下字 -> 左图右字 -->
-    <img :src="activity.image" alt="活动图片" class="activity-image">
+    <img :src="activity.activity_image_path" alt="活动图片" class="activity-image">
     <div class="activity-info">
-      <h3>{{ activity.title }}</h3>
-      <p>主办方: {{ activity.host }}</p>
-      <p>标签： {{ activity.label }}</p>
-      <p>报名人数: {{ activity.participants }}</p>
-      <p>报名时间: {{ activity.registrationPeriod }}</p>
-      <p>地点: {{ activity.location }}</p>
-      <p>活动时间: {{ activity.activityPeriod }}</p>
+      <h3>{{ activity.activity_name }}</h3>
+      <p>主办方: {{ activity.contact_name }}</p>
+      <p>标签: {{ activity.activity_tags }}</p>
+      <p>报名人数: {{ activity.accepted_volunteers }}</p>
+      <p>报名时间: {{ activity.application_start_time }} 至 {{ activity.application_end_time }}</p>
+      <p>地点: {{ activity.activity_location }}</p>
+      <p>活动时间: {{ activity.activity_start_time }} 至 {{ activity.activity_end_time }}</p>
     </div>
   </div>
 </template>
@@ -43,7 +42,7 @@ export default {
 /* TODO 调整卡片样式 */
 .activity-card {
   width: 400px; 
-  height: 250px; 
+  height: 350px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
