@@ -1,15 +1,24 @@
 from rest_framework import serializers
 from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity
 
+from rest_framework import serializers
+from .models import Volunteer, Organizer
+
 class VolunteerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Volunteer
         fields = '__all__'
+        extra_kwargs = {
+            'password': {'write_only': True}  # 使密码字段仅可写，不可读
+        }
 
 class OrganizerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organizer
         fields = '__all__'
+        extra_kwargs = {
+            'password': {'write_only': True}  # 使密码字段仅可写，不可读
+        }
 
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
