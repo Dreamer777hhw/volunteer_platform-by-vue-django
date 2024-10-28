@@ -86,20 +86,40 @@
 
 <script>
 import NavBar from '@/components/NavBar.vue';
+import axios from 'axios';
 export default {
-  name: 'UserAccountView',
+  name: 'VolunteerViewSet',
   components: {
     NavBar,
   },
   data() {
+    // return {
+    //   studentId: '123456',
+    //   name: '张三',
+    //   school: '计算机学院',
+    //   major: '软件工程',
+    //   email: 'zhangsan@example.com',
+    //   phone: '13800000000',
+    //   password: '123456',
+    //   isEditingInfo: false, // 是否正在修改信息
+    //   isEditingPassword: false, // 是否正在修改密码
+    //   editName: '',
+    //   editSchool: '',
+    //   editMajor: '',
+    //   editEmail: '',
+    //   editPhone: '',
+    //   newPassword: '',
+    //   confirmPassword: '',
+    //   passwordError: '',
+    // };
     return {
-      studentId: '123456',
-      name: '张三',
-      school: '计算机学院',
-      major: '软件工程',
-      email: 'zhangsan@example.com',
-      phone: '13800000000',
-      password: '123456',
+      studentId: '',
+      name: '',
+      school: '',
+      major: '',
+      email: '',
+      phone: '',
+      password: '',
       isEditingInfo: false, // 是否正在修改信息
       isEditingPassword: false, // 是否正在修改密码
       editName: '',
@@ -112,7 +132,36 @@ export default {
       passwordError: '',
     };
   },
+  mounted() {
+    this.fetchUserData();
+  },
   methods: {
+    async fetchUserData() {
+      const token = localStorage.getItem('token'); // 从本地存储获取token
+      if (!token) {
+        console.error("未找到token");
+        return;
+      }
+
+      try {
+        // 直接将token放入请求URL
+        const response = await axios.get(`http://127.0.0.1:8000/api/account/${token}/`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // 使用Token认证
+          },
+        });
+        const data = response.data;
+        this.studentId = data.student_id;
+        this.name = data.name;
+        this.school = data.school;
+        this.major = data.major;
+        this.email = data.email;
+        this.phone = data.phone;
+        // 其他字段
+      } catch (error) {
+        console.error("获取用户数据失败:", error);
+      }
+    },
     /**
      * @description 信息修改
      * @return {void}
@@ -146,7 +195,7 @@ export default {
       alert('注销成功，正在返回主页...');
       this.$router.push('/'); // 返回主页
     }
-  }
+  },
 };
 </script>
 
