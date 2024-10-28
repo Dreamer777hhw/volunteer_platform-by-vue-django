@@ -48,6 +48,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name : 'LoginView',
   data() {
@@ -63,6 +64,8 @@ export default {
     if (localStorage.getItem('rememberMe') === 'true') {
       this.password = localStorage.getItem('password');
     }
+    this.AutoTokenLogin();
+    this.AutoPasswdLogin();
   },
   methods: {
     /**
@@ -77,26 +80,94 @@ export default {
      * @description 登录方法，验证用户名和密码，并处理记住密码逻辑
      * @return {void}
      */
-    login() {
-      if (this.username === 'root' && this.password === 'passwd') {
-        //TODO 登录成功的逻辑
-        console.log('登录成功');
-        localStorage.setItem('username', this.username);
-        //TODO 从后端获取 token
-        const token = 'your-authentication-token';
-        localStorage.setItem('token', token);
-        
-        if (this.rememberMe) {
-          localStorage.setItem('password', this.password);
-          localStorage.setItem('rememberMe', 'true');
-        } else {
-          localStorage.removeItem('password');
-          localStorage.removeItem('rememberMe');
+    async login() {
+      try {
+        const response = await axios.post('http://127.0.0.1:8000/api/login/', {
+          user_id: this.username,
+          password: this.password,
+          user_type: this.userType,
+        });
+
+        // 登录成功处理
+        if (response.status === 200) {
+          const token = response.data.token;
+          localStorage.setItem('token', token);
+          alert('登录成功！');
+          localStorage.setItem('username', this.username);
+
+          if (this.rememberMe) {
+            localStorage.setItem('password', this.password);
+            localStorage.setItem('rememberMe', 'True');
+          } else {
+            localStorage.removeItem('password');
+            localStorage.removeItem('rememberMe');
+          }
+
+          this.$router.push({ path: '/' }); // 跳转到首页
         }
-        this.$router.push('/'); // 跳转到首页
+      } catch (error) {
+        // 处理错误
+        if (error.response && error.response.data) {
+          alert("登录失败: " + JSON.stringify(error.response.data));
+        } else {
+          alert("登录失败: 网络错误");
+        }
+      }
+    },
+    async AutoTokenLogin() {
+      const token = localStorage.getItem('token');
+
+      if (token) {
+        try {
+          const response = await axios.post('http://127.0.0.1:8000/api/autotokenlogin/', {
+            token: token,
+          });
+
+          // 登录成功处理
+          if (response.status === 200) {
+            alert('自动登录成功！');
+            this.$router.push({ path: '/' }); // 跳转到首页
+          }
+        } catch (error) {
+          // 处理错误
+          if (error.response && error.response.data) {
+            alert("自动登录失败: " + JSON.stringify(error.response.data));
+          } else {
+            alert("自动登录失败: 网络错误");
+          }
+        }
       } else {
-        //TODO 登录失败的逻辑
-        alert('账号或密码错误');
+        // alert("未找到 token，请手动登录。");
+      }
+    },
+    async AutoPasswdLogin() {
+      const userId = localStorage.getItem('user_id');
+      const password = localStorage.getItem('password');
+      const userType = this.userType; // 假设你在组件中有这个变量
+
+      if (userId && password) {
+        try {
+          const response = await axios.post('http://127.0.0.1:8000/api/autopasswdlogin/', {
+            user_id: userId,
+            password: password,
+            user_type: userType,
+          });
+
+          // 登录成功处理
+          if (response.status === 200) {
+            alert('凭据自动登录成功！');
+            this.$router.push({ path: '/' }); // 跳转到首页
+          }
+        } catch (error) {
+          // 处理错误
+          if (error.response && error.response.data) {
+            alert("凭据自动登录失败: " + JSON.stringify(error.response.data));
+          } else {
+            alert("凭据自动登录失败: 网络错误");
+          }
+        }
+      } else {
+        // alert("未找到用户凭据，请手动登录。");
       }
     },
   },
