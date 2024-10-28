@@ -8,6 +8,8 @@ import jwt
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count, F, Q
 
 class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
@@ -189,3 +191,135 @@ class AccountView(APIView):
             return Response({'error': 'Token解码失败'}, status=status.HTTP_401_UNAUTHORIZED)
         except Volunteer.DoesNotExist:
             return Response({'error': '用户不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+class ActivityDetailView(APIView):
+    def get(self, request, activity_id_hash):
+        try:
+            activity = Activity.objects.get(activity_id=activity_id_hash)
+            data = {
+                'activity_id': activity.activity_id,
+                'activity_name': activity.activity_name,
+                'activity_description': activity.activity_description,
+                'activity_tags': activity.activity_tags,
+                'image_path': activity.activity_image_path,
+                'application_requirements': activity.application_requirements,
+                'application_start_time': activity.application_start_time,
+                'application_end_time': activity.application_end_time,
+                'activity_start_time': activity.activity_start_time,
+                'activity_end_time': activity.activity_end_time,
+                'estimated_volunteer_hours': activity.estimated_volunteer_hours,
+                'activity_location': activity.activity_location,
+                'contact_name': activity.contact_name,
+                'contact_phone': activity.contact_phone,
+                'organizer': activity.organizer.name,  # 假设 Organizer 有一个 name 字段
+                'accepted_volunteers': activity.accepted_volunteers,
+                'labor_hours': activity.labor_hours,
+                'sutuo': activity.sutuo,
+                'notes': activity.notes,
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Activity.DoesNotExist:
+            return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+class ActivityListView(APIView):
+    def get(self, request):
+        activities = Activity.objects.all()
+        data = []
+        for activity in activities:
+            data.append({
+                'activity_id': activity.activity_id,
+                'activity_name': activity.activity_name,
+                'activity_description': activity.activity_description,
+                'activity_tags': activity.activity_tags,
+                'image_path': activity.activity_image_path,
+                'application_requirements': activity.application_requirements,
+                'application_start_time': activity.application_start_time,
+                'application_end_time': activity.application_end_time,
+                'activity_start_time': activity.activity_start_time,
+                'activity_end_time': activity.activity_end_time,
+                'estimated_volunteer_hours': activity.estimated_volunteer_hours,
+                'activity_location': activity.activity_location,
+                'contact_name': activity.contact_name,
+                'contact_phone': activity.contact_phone,
+                'organizer': activity.organizer.name,  # 假设 Organizer 有一个 name 字段
+                'accepted_volunteers': activity.accepted_volunteers,
+                'labor_hours': activity.labor_hours,
+                'sutuo': activity.sutuo,
+                'notes': activity.notes,
+            })
+        return Response(data, status=status.HTTP_200_OK)
+
+class RecommendActivityView(APIView):
+    def get(self, request, tab, username):
+        if tab == 'recommend':
+            # 获取招募中的活动
+            activities = Activity.objects.filter(
+                activitystatus__activity_status='招募中',
+            )
+            activity_data = []
+            # 筛选当前用户最喜爱的活动类型
+            user_favorite_tags = VolunteerActivity.objects.filter(student_id=username).values(
+                'activity__activity_tags').annotate(count=Count('activity')).order_by('-count')
+            # 如果用户有最喜欢的标签，按标签筛选活动
+            if user_favorite_tags.exists():
+                for user_favorite_tag in user_favorite_tags:
+                    tag = user_favorite_tag['activity__activity_tags']
+                    # 从招募中的活动中筛选出包含该标签的活动
+                    tagged_activities = activities.filter(activity_tags=tag).values()[:1]  # 每个标签取最多3个活动
+                    activity_data.extend(tagged_activities)  # 将找到的活动添加到结果列表中
+
+                    # 如果已经找到了3个活动，退出循环
+                    if len(activity_data) >= 3:
+                        break
+
+            # 如果没有找到用户喜欢的活动，则返回所有招募中的活动
+            if not activity_data:
+                activity_data = list(activities.values())[:3]  # 限制返回3个活动
+
+            return Response(list(activity_data)[:3])  # 确保返回的列表最多为3个活动
+
+        elif tab == 'hot':
+            hot_activities = Activity.objects.filter(
+                activitystatus__activity_status='进行中'
+            ).annotate(total_clicks=F('activitystatus__total_clicks')).order_by('-total_clicks')[:3]
+            # 只选择需要的字段，并将结果转换为列表
+            activity_data = list(hot_activities.values())[:3]  # 确保最多返回3个活动
+            return Response(activity_data)  # 直接返回活动列表
+
+        return Response({'error': '无效的标签'}, status=400)
+
+
+class UserActivityPagination(PageNumberPagination):
+    page_size = 4  # 每页活动数量
+    page_size_query_param = 'page_size'
+    max_page_size = 10
+
+class UserActivityView(APIView):
+    def get(self, request):
+        user_id = request.GET.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 获取用户参与的活动
+        volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
+
+        # 处理状态过滤
+        status_filter = request.GET.get('status')
+        if status_filter:
+            volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
+
+        # 处理搜索查询
+        search_query = request.GET.get('search')
+        if search_query:
+            volunteer_activities = volunteer_activities.filter(
+                Q(activity__activity_name__icontains=search_query) |
+                Q(activity__activity_location__icontains=search_query) |
+                Q(activity__organizer__name__icontains=search_query)  # 假设你有一个组织者的名字字段
+            )
+
+        paginator = UserActivityPagination()
+        paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
+
+        # 序列化活动数据
+        serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
+        return paginator.get_paginated_response(serializer.data)

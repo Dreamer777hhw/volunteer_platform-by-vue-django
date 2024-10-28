@@ -8,7 +8,7 @@
 
 <template>
   <div class="activity-card-row">
-    <ActivityCard v-for="(activity, index) in limitedActivities" :key="index" :activity="activity" />
+    <ActivityCard v-for="activity in limitedActivities" :key="activity.activity_id" :activity="activity" />
   </div>
 </template>
 

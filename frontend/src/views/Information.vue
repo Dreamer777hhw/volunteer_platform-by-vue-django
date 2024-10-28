@@ -24,6 +24,10 @@
               <option value="未参与">未参与</option>
               <option value="参与中">参与中</option>
               <option value="已参与">已参与</option>
+              <option value="已报名">已报名</option>
+              <option value="已录取">已录取</option>
+              <option value="未录取">未录取</option>
+              <option value="已取消">已取消</option>
             </select>
           </div>
           <div class="search-bar">
@@ -43,18 +47,19 @@
         </div>
 
         <div class="activity-list">
-          <div v-for="activity in paginatedActivities" :key="activity.title" class="activity-row">
+          <div v-for="activity in activities" :key="activity.id" class="activity-row">
             <ActivityCard :activity="activity" />
             <span>{{ activity.host }}</span>
-            <span>{{ activity.status }}</span>
+            <span>{{ activity.activity_result }}</span>
           </div>
         </div>
-<!-- TODO 分页操作 -->
+
         <el-pagination
           layout="prev, pager, next"
           :page-size="activitiesPerPage"
-          :total="filteredActivities.length"
+          :total="totalActivities"
           @current-change="handlePageChange"
+          :current-page="currentPage"
         />
       </div>
     </div>
@@ -64,6 +69,7 @@
 <script>
 import ActivityCard from '@/components/ActivityCard.vue'
 import NavBar from '@/components/NavBar.vue'
+import axios from 'axios'
 
 export default {
   name: 'InformationView',
@@ -75,119 +81,45 @@ export default {
     return {
       searchQuery: '',
       selectedStatus: '',
-      activities: [
-        {
-          image: 'activity-images/activity-11.jpg',
-          title: '旋律欣赏活动1',
-          host: '艺术学院',
-          label: '劳动教育',
-          participants: '60 / 60 人',
-          registrationPeriod: '2024-10-12 ~ 2024-10-23',
-          location: '图书馆',
-          activityPeriod: '2024-10-10 ~ 2024-10-21',
-          status: '未参与',
-        },
-        {
-          image: 'activity-images/activity-11.jpg',
-          title: '旋律欣赏活动2',
-          host: '艺术学院',
-          label: '文体活动',
-          participants: '60 / 60 人',
-          registrationPeriod: '2024-10-12 ~ 2024-10-23',
-          location: '图书馆',
-          activityPeriod: '2024-10-10 ~ 2024-10-21',
-          status: '未参与',
-        },
-        {
-          image: 'activity-images/activity-21.jpg',
-          title: '志愿招募活动',
-          host: '志愿者组织',
-          label: '志愿公益',
-          participants: '20 / 20 人',
-          registrationPeriod: '2024-10-10 ~ 2024-10-14',
-          location: '创新中心',
-          activityPeriod: '2024-10-11 ~ 2024-10-15',
-          status: '参与中',
-        },
-        {
-          image: 'activity-images/activity-21.jpg',
-          title: '科技创新活动',
-          host: '科技学院',
-          label: '科创活动',
-          participants: '30 / 30 人',
-          registrationPeriod: '2024-10-15 ~ 2024-10-20',
-          location: '科技园',
-          activityPeriod: '2024-10-21 ~ 2024-10-25',
-          status: '已参与',
-        },
-      ],
-      filteredActivities: [],
+      activities: [],
+      totalActivities: 0,
       currentPage: 1,
-      activitiesPerPage: 5,
+      activitiesPerPage: 4,
     }
   },
   methods: {
-    /** 
-     * @description 根据状态筛选活动 
-     * @param {Event} event - 事件对象 
-     * @return {void}
-     */
-    filterByStatus(event) {
-      this.selectedStatus = event.target.value
-      this.applyFilters()
+    async fetchActivities() {
+      const response = await axios.get(`http://127.0.0.1:8000/api/user-activities/`, {
+        params: {
+          page: this.currentPage,
+          status: this.selectedStatus,
+          search: this.searchQuery,
+          user_id: localStorage.getItem('username'), // 获取 user_id
+        },
+      });
+      this.activities = response.data.results; // 更新活动列表
+      this.totalActivities = response.data.count; // 更新总活动数
     },
-    /** 
-     * @description 搜索活动 
-     * @return {void}
-     */
+    filterByStatus() {
+      this.currentPage = 1; // 重置到第一页
+      this.fetchActivities();
+    },
     searchActivities() {
-      this.applyFilters()
+      this.currentPage = 1; // 重置到第一页
+      this.fetchActivities();
     },
-    /** 
-     * @description 应用筛选条件 
-     * @return {void}
-     */
-    applyFilters() {
-      this.filteredActivities = this.activities.filter(activity => {
-        const matchesSearch =
-          activity.title.includes(this.searchQuery) ||
-          activity.host.includes(this.searchQuery) ||
-          activity.location.includes(this.searchQuery)
-
-        const matchesStatus =
-          !this.selectedStatus || activity.status === this.selectedStatus
-
-        return matchesSearch && matchesStatus
-      })
-    },
-    /** 
-     * @description 处理分页变化 
-     * @param {number} page - 当前页码 
-     * @return {void}
-     */
     handlePageChange(page) {
-      this.currentPage = page
-    },
-  },
-  computed: {
-    /** 
-     * @description 获取当前页的活动 
-     * @return {Array} 当前页的活动列表 
-     */
-    paginatedActivities() {
-      const start = (this.currentPage - 1) * this.activitiesPerPage
-      const end = start + this.activitiesPerPage
-      return this.filteredActivities.slice(start, end)
+      this.currentPage = page;
+      this.fetchActivities();
     },
   },
   mounted() {
-    this.filteredActivities = this.activities
+    this.fetchActivities(); // 初始化时加载活动
   },
 }
 </script>
 
 <style scoped>
-/* TODO 样式调整 */
 .activities-container {
   display: flex;
   width: 80%;
@@ -231,17 +163,6 @@ export default {
   margin-top: 10px;
   border: 1px solid #ddd;
 }
-
-.activity-list span {
-  flex-basis: 40%;
-  text-align: center;
-}
-.activity-list span:nth-child(2) {
-    flex-basis: 30%;
-}
-.activity-list span:nth-child(3) {
-    flex-basis: 30%;
-} 
 .activity-row {
   display: flex;
   align-items: center;

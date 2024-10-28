@@ -1,9 +1,9 @@
-<!-- 
+<!--
     * @FileDescription: 活动列表组件，包含活动筛选、排序和展示功能
-    * @Author: infinity 
-    * @Date: 2024-10-22 
-    * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-22 
+    * @Author: infinity
+    * @Date: 2024-10-22
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-10-28
  -->
 
 <template>
@@ -16,13 +16,13 @@
         <input type="checkbox" v-model="selectedLabels" :value="label"> {{ label }}
       </label>
     </div>
-    
+
     <div class="filter-row">
       <label v-for="status in statuses" :key="status">
         <input type="checkbox" v-model="selectedStatuses" :value="status"> {{ status }}
       </label>
     </div>
-    
+
     <div class="filter-row">
       <input type="text" v-model="searchQuery" placeholder="搜索活动名称" />
       <select v-model="sortBy">
@@ -31,14 +31,21 @@
       </select>
     </div>
 
-    <ActivityCardRow :activities="filteredActivities.slice(0,3)" />
-    <!-- TODO 显示更多行卡片 -->
+    <div>
+      <ActivityCardRow
+        v-for="(activityRow, index) in activityRows"
+        :key="index"
+        :activities="activityRow"
+      />
+    </div>
 
+    <div ref="loadMoreTrigger" class="load-more-trigger"></div>
   </div>
 </template>
 
 <script>
 import ActivityCardRow from '@/components/ActivityCardRow.vue';
+import axios from 'axios';
 
 export default {
   name: "ActivityListComponent",
@@ -53,144 +60,93 @@ export default {
       selectedStatuses: [],
       searchQuery: "",
       sortBy: "time",
-      Activities: [
-        // 假设的静态活动数据
-        // TODO 从后端获取真实数据
-        {
-          image: 'activity-images/activity-11.jpg',
-          title: '旋律欣赏活动1',
-          host: '艺术学院',
-          label: '劳动教育',
-          participants: '60 / 60 人',
-          registrationPeriod: '2024-10-12 ~ 2024-10-23',
-          location: '图书馆',
-          activityPeriod: '2024-10-10 ~ 2024-10-21',
-        },
-        {
-          image: 'activity-images/activity-11.jpg',
-          title: '旋律欣赏活动2',
-          host: '艺术学院',
-          label: '文体活动',
-          participants: '60 / 60 人',
-          registrationPeriod: '2024-10-12 ~ 2024-10-23',
-          location: '图书馆',
-          activityPeriod: '2024-10-10 ~ 2024-10-21',
-        },
-        {
-          image: 'activity-images/activity-21.jpg',
-          title: '志愿招募活动',
-          host: '志愿者组织',
-          label: '志愿公益',
-          participants: '20 / 20 人',
-          registrationPeriod: '2024-10-10 ~ 2024-10-14',
-          location: '创新中心',
-          activityPeriod: '2024-10-11 ~ 2024-10-15',
-        },
-        {
-          image: 'activity-images/activity-21.jpg',
-          title: '科技创新活动',
-          host: '科技学院',
-          label: '科创活动',
-          participants: '30 / 30 人',
-          registrationPeriod: '2024-10-15 ~ 2024-10-20',
-          location: '科技园',
-          activityPeriod: '2024-10-21 ~ 2024-10-25',
-        },
-      ],
-      visibleActivities: [],
-      itemsPerPage: 15,
+      activities: [],
       currentPage: 1,
+      itemsPerPage: 15,
     };
   },
   computed: {
-    /**
-     * @description 根据筛选条件和排序规则过滤活动
-     * @return {Array} 过滤后的活动列表
-     */
     filteredActivities() {
-      return this.Activities
-        .filter((activity) => {
-          // 标签筛选
-          if (this.selectedLabels.length > 0 && !this.selectedLabels.includes(activity.label)) {
+      return this.activities
+        .filter(activity => {
+          if (this.selectedLabels.length > 0 && !this.selectedLabels.includes(activity.activity_tags)) {
             return false;
           }
-          // 状态筛选
           if (this.selectedStatuses.length > 0 && !this.selectedStatuses.includes(activity.status)) {
             return false;
           }
-          // 搜索过滤
-          if (this.searchQuery && !activity.title.includes(this.searchQuery)) {
+          if (this.searchQuery && !activity.activity_name.includes(this.searchQuery)) {
             return false;
           }
           return true;
         })
         .sort((a, b) => {
-          // TODO 实现排序功能
           if (this.sortBy === "time") {
-            return new Date(a.activityPeriod) - new Date(b.activityPeriod);
+            return new Date(a.activity_start_time) - new Date(b.activity_start_time);
           } else if (this.sortBy === "participants") {
-            return b.participants - a.participants;
+            return b.accepted_volunteers - a.accepted_volunteers;
           }
         });
     },
+    activityRows() {
+      const rows = [];
+      const totalActivities = this.filteredActivities.length;
+
+      for (let i = 0; i < Math.min(totalActivities, this.currentPage * this.itemsPerPage); i += 3) {
+        rows.push(this.filteredActivities.slice(i, i + 3));
+      }
+
+      return rows;
+    },
   },
   methods: {
-    /**
-     * @description 清除所有筛选条件
-     * @return {void}
-     */
     clearFilters() {
       this.selectedLabels = [];
       this.selectedStatuses = [];
+      this.searchQuery = "";
+      this.currentPage = 1; // Reset page on filter clear
+      this.fetchActivities(); // Re-fetch activities
     },
-    /**
-     * @description 加载更多活动
-     * @return {void}
-     */
+    async fetchActivities() {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/activities/');
+        this.activities = response.data;
+      } catch (error) {
+        console.error('获取活动数据失败:', error);
+      }
+    },
+    setupIntersectionObserver() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            this.loadMore();
+          }
+        });
+      });
+
+      observer.observe(this.$refs.loadMoreTrigger);
+    },
     loadMore() {
-      const nextPageActivities = this.filteredActivities.slice(this.currentPage * this.itemsPerPage, (this.currentPage + 1) * this.itemsPerPage);
-      this.visibleActivities = this.visibleActivities.concat(nextPageActivities);
-      this.currentPage++;
+      if (this.filteredActivities.length > this.currentPage * this.itemsPerPage) {
+        this.currentPage++;
+      }
     },
-    /**
-     * @description 设置 IntersectionObserver 以检测用户是否滚动到底部
-     * @return {void}
-     */
-    // setupIntersectionObserver() {
-    //   const options = {
-    //     root: null,
-    //     rootMargin: '0px',
-    //     threshold: 1.0
-    //   };
-
-    //   const observer = new IntersectionObserver((entries) => {
-    //     entries.forEach(entry => {
-    //       if (entry.isIntersecting) {
-    //         this.loadMore();
-    //       }
-    //     });
-    //   }, options);
-
-    //   observer.observe(this.$refs.loadMoreTrigger);
-    // }
   },
   mounted() {
-    this.loadMore(); // 初始加载活动
-    // this.setupIntersectionObserver(); // 设置 IntersectionObserver
+    this.fetchActivities();
+    this.setupIntersectionObserver(); // 设置 IntersectionObserver
   }
 };
 </script>
 
 <style scoped>
-/* TODO 按钮和复选框样式 */
-/* TODO 背景与边框 */
 .filter-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
 }
 
-button {
-  margin: 5px;
+.load-more-trigger {
+  height: 1px; /* 不占空间 */
 }
 </style>
