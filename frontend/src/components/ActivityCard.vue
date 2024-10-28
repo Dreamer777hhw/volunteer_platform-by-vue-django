@@ -7,7 +7,7 @@
  -->
 
 <template>
-  <div class="activity-card">
+  <div class="activity-card" @click="goToDetail">
     <img :src="activity.activity_image_path" alt="活动图片" class="activity-image">
     <div class="activity-info">
       <h3>{{ activity.activity_name }}</h3>
@@ -25,30 +25,38 @@
 export default {
   name: 'ActivityCard',
   props: {
-    /**
-     * @description 活动对象，包含活动的详细信息
-     * @type {Object}
-     * @required
-     */
     activity: {
       type: Object,
       required: true,
     },
   },
+  methods: {
+    goToDetail() {
+      this.$router.push({ name: 'ActivityDetail', params: { activity_id_hash: this.activity.activity_id } });
+    },
+  },
+
 };
 </script>
 
 <style scoped>
-/* TODO 调整卡片样式 */
 .activity-card {
-  width: 400px; 
+  display: block; /* 让整个卡片可点击 */
+  width: 400px;
   height: 350px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: left;
   overflow: hidden;
-  margin: 10px; 
+  margin: 10px;
+  text-decoration: none; /* 移除链接下划线 */
+  color: inherit; /* 继承父元素的颜色 */
+  transition: transform 0.2s; /* 添加过渡效果 */
+}
+
+.activity-card:hover {
+  transform: scale(1.02); /* 悬停时稍微放大卡片 */
 }
 
 .activity-image {

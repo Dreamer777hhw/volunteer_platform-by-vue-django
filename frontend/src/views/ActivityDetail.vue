@@ -11,23 +11,24 @@
     <NavBar />
     <div class="activity-detail-container">
       <div class="activity-view">
-        <img :src="image" alt="活动图片" class="activity-image" />
+        <img :src="activity.image_path" alt="活动图片" class="activity-image" />
         <div class="activity-info">
-          <h1 class="activity-title">{{ title }}</h1>
+          <h1 class="activity-title">{{ activity.activity_name }}</h1>
           <p class="activity-time">{{ activityPeriod }}</p>
           <div class="activity-details">
-            <!-- TODO 显示具体数据 -->
-            <p v-if="host">主办方: {{ host }}</p>
-            <p v-if="contactName">负责人姓名: {{ contactName }}</p>
-            <p v-if="contactPhone">负责人手机: {{ contactPhone }}</p>
-            <p v-if="label">活动类型: {{ label }}</p>
-            <p v-if="participants">报名人数: {{ participants }}</p>
+            <p v-if="activity.organizer">主办方: {{ activity.organizer }}</p>
+            <p v-if="activity.contact_name">负责人姓名: {{ activity.contact_name }}</p>
+            <p v-if="activity.contact_phone">负责人手机: {{ activity.contact_phone }}</p>
+            <p v-if="activity.activity_tags">活动类型: {{ activity.activity_tags }}</p>
+            <p v-if="activity.accepted_volunteers !== undefined">
+              录取人数: {{ activity.accepted_volunteers }}
+            </p>
+            <p v-if="activity.estimated_volunteer_hours">劳动时长: {{ activity.estimated_volunteer_hours }}</p>
             <p v-if="registrationPeriod">报名时间: {{ registrationPeriod }}</p>
-            <p v-if="location" class="activity-location">活动地点: {{ location }}</p>
-            <button 
-              class="register-button" 
-              :disabled="isFull"
-            >
+            <p v-if="activity.activity_location" class="activity-location">
+              活动地点: {{ activity.activity_location }}
+            </p>
+            <button class="register-button" :disabled="isFull" @click="registerForActivity">
               {{ isFull ? '报名已满' : '报名' }}
             </button>
           </div>
@@ -36,18 +37,19 @@
       <hr class="divider" />
       <div class="activity-description">
         <h2>活动描述</h2>
-        <p>{{ activityDescription }}</p>
+        <p>{{ activity.activity_description }}</p>
       </div>
       <div class="activity-notes">
         <h2>备注</h2>
-        <p>{{ notes }}</p>
+        <p>{{ activity.notes }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'
+import NavBar from '@/components/NavBar.vue';
+import axios from 'axios';
 
 export default {
   name: 'ActivityDetailView',
@@ -56,37 +58,51 @@ export default {
   },
   data() {
     return {
-      image: '../../activity-images/activity-1.jpg',
-      title: '旋律欣赏活动1',
-      host: '艺术学院',
-      label: '劳动教育',
-      participants: '60 / 60 人',
-      registrationPeriod: '2024-10-12 ~ 2024-10-23',
-      location: '图书馆',
-      activityPeriod: '2024-10-10 ~ 2024-10-21',
-      contactName: '张三',
-      contactPhone: '1234567890',
-      activityDescription: '这是一个旋律欣赏活动，旨在提高学生的音乐素养。',
-      notes: '请准时参加活动。',
+      activity: {},
     };
   },
-// TODO 从后端获取活动详情数据
   computed: {
-    /** 
-     * @description 判断活动是否已满员 
-     * @return {boolean} 是否满员 
+    /**
+     * @description 判断活动是否已满员
+     * @return {boolean} 是否满员
      */
     isFull() {
-      return this.participants.split(' / ')[0] === this.participants.split(' / ')[1];
-    }
+      return this.activity.accepted_volunteers >= this.activity.estimated_volunteer_hours;
+    },
+    activityPeriod() {
+      return `${this.activity.activity_start_time} ~ ${this.activity.activity_end_time}`;
+    },
+    registrationPeriod() {
+      return `${this.activity.application_start_time} ~ ${this.activity.application_end_time}`;
+    },
+  },
+  methods: {
+    async fetchActivityDetail() {
+      const activityIdHash = this.$route.params.activity_id_hash; // 从路由参数中获取活动 ID
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/api/activities/${activityIdHash}/`);
+        this.activity = response.data;
+      } catch (error) {
+        console.error("获取活动详情失败:", error);
+      }
+    },
+    registerForActivity() {
+      // 处理报名逻辑
+      alert('报名成功！');
+      // 此处可以增加更复杂的逻辑，比如调用后端API进行报名
+    },
+  },
+  mounted() {
+    console.log("Activity ID Hash:", this.$route.params.activity_id_hash); // 调试输出
+    this.fetchActivityDetail();
   }
+
 };
 </script>
 
 <style scoped>
-/* TODO 调整样式 */
 .activity-detail-container {
-  margin-top: 80px; 
+  margin-top: 80px;
   padding: 2rem;
   background-color: #f0f2f5;
 }
@@ -95,13 +111,13 @@ export default {
   display: flex;
   width: 80%;
   margin: 0 auto;
-  align-items: flex-start; 
+  align-items: flex-start;
 }
 
 .activity-image {
   margin-top: 10px;
   width: 20%;
-  height: 300px; 
+  height: 300px;
   object-fit: cover;
 }
 
@@ -116,7 +132,7 @@ export default {
 .activity-title {
   font-size: 2rem;
   font-weight: bold;
-  margin: 0; 
+  margin: 0;
 }
 
 .activity-time {
@@ -130,11 +146,11 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  font-size: 1rem; 
+  font-size: 1rem;
 }
 
 .activity-details p {
-  margin: 0.3rem; 
+  margin: 0.3rem;
 }
 
 .activity-location {
