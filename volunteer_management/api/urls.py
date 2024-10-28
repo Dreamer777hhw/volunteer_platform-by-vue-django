@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (VolunteerViewSet, OrganizerViewSet, ActivityViewSet,
                     ActivityStatusViewSet, ActivityApplicationViewSet, VolunteerActivityViewSet,
                     LoginView, RegisterView, AccountView, AutoTokenLoginView, AutoPasswdLoginView,
-                    ActivityDetailView, ActivityListView, RecommendActivityView)
+                    ActivityDetailView, ActivityListView, RecommendActivityView,
+                    UserActivityView)
 
 router = DefaultRouter()
 router.register(r'volunteers', VolunteerViewSet)
@@ -23,4 +24,5 @@ urlpatterns = [
     path('activities/${activityIdHash}/', ActivityDetailView.as_view(), name='activity-detail'),
     path('activities/', ActivityListView.as_view(), name='activity-list'),
     path('recommend/<str:tab>/<str:username>/', RecommendActivityView.as_view(), name='recommend-activity'),
+    path('user-activities/', UserActivityView.as_view(), name='user-activity'),
 ]

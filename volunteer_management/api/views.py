@@ -8,7 +8,8 @@ import jwt
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Count, F
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count, F, Q
 
 class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
@@ -286,3 +287,39 @@ class RecommendActivityView(APIView):
             return Response(activity_data)  # 直接返回活动列表
 
         return Response({'error': '无效的标签'}, status=400)
+
+
+class UserActivityPagination(PageNumberPagination):
+    page_size = 4  # 每页活动数量
+    page_size_query_param = 'page_size'
+    max_page_size = 10
+
+class UserActivityView(APIView):
+    def get(self, request):
+        user_id = request.GET.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 获取用户参与的活动
+        volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
+
+        # 处理状态过滤
+        status_filter = request.GET.get('status')
+        if status_filter:
+            volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
+
+        # 处理搜索查询
+        search_query = request.GET.get('search')
+        if search_query:
+            volunteer_activities = volunteer_activities.filter(
+                Q(activity__activity_name__icontains=search_query) |
+                Q(activity__activity_location__icontains=search_query) |
+                Q(activity__organizer__name__icontains=search_query)  # 假设你有一个组织者的名字字段
+            )
+
+        paginator = UserActivityPagination()
+        paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
+
+        # 序列化活动数据
+        serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
+        return paginator.get_paginated_response(serializer.data)
