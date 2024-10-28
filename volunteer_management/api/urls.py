@@ -20,6 +20,6 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('autotokenlogin/', AutoTokenLoginView.as_view(), name='autotokenlogin'),
     path('autopasswdlogin/', AutoPasswdLoginView.as_view(), name='autopasswdlogin'),
-    path('activities/${activityId}/', ActivityDetailView.as_view(), name='activity-detail'),
+    path('activities/${activityIdHash}/', ActivityDetailView.as_view(), name='activity-detail'),
     path('activities/', ActivityListView.as_view(), name='activity-list'),
 ]

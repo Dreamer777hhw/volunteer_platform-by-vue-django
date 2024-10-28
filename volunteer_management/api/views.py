@@ -191,9 +191,9 @@ class AccountView(APIView):
             return Response({'error': '用户不存在'}, status=status.HTTP_404_NOT_FOUND)
 
 class ActivityDetailView(APIView):
-    def get(self, request, activity_id):
+    def get(self, request, activity_id_hash):
         try:
-            activity = Activity.objects.get(activity_id=activity_id)
+            activity = Activity.objects.get(activity_id=activity_id_hash)
             data = {
                 'activity_id': activity.activity_id,
                 'activity_name': activity.activity_name,
