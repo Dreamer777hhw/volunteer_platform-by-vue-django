@@ -8,6 +8,7 @@ import jwt
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Count, F
 
 class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
@@ -246,3 +247,42 @@ class ActivityListView(APIView):
                 'notes': activity.notes,
             })
         return Response(data, status=status.HTTP_200_OK)
+
+class RecommendActivityView(APIView):
+    def get(self, request, tab, username):
+        if tab == 'recommend':
+            # 获取招募中的活动
+            activities = Activity.objects.filter(
+                activitystatus__activity_status='招募中',
+            )
+            activity_data = []
+            # 筛选当前用户最喜爱的活动类型
+            user_favorite_tags = VolunteerActivity.objects.filter(student_id=username).values(
+                'activity__activity_tags').annotate(count=Count('activity')).order_by('-count')
+            # 如果用户有最喜欢的标签，按标签筛选活动
+            if user_favorite_tags.exists():
+                for user_favorite_tag in user_favorite_tags:
+                    tag = user_favorite_tag['activity__activity_tags']
+                    # 从招募中的活动中筛选出包含该标签的活动
+                    tagged_activities = activities.filter(activity_tags=tag).values()[:1]  # 每个标签取最多3个活动
+                    activity_data.extend(tagged_activities)  # 将找到的活动添加到结果列表中
+
+                    # 如果已经找到了3个活动，退出循环
+                    if len(activity_data) >= 3:
+                        break
+
+            # 如果没有找到用户喜欢的活动，则返回所有招募中的活动
+            if not activity_data:
+                activity_data = list(activities.values())[:3]  # 限制返回3个活动
+
+            return Response(list(activity_data)[:3])  # 确保返回的列表最多为3个活动
+
+        elif tab == 'hot':
+            hot_activities = Activity.objects.filter(
+                activitystatus__activity_status='进行中'
+            ).annotate(total_clicks=F('activitystatus__total_clicks')).order_by('-total_clicks')[:3]
+            # 只选择需要的字段，并将结果转换为列表
+            activity_data = list(hot_activities.values())[:3]  # 确保最多返回3个活动
+            return Response(activity_data)  # 直接返回活动列表
+
+        return Response({'error': '无效的标签'}, status=400)
