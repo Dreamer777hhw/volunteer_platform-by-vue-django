@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (VolunteerViewSet, OrganizerViewSet, ActivityViewSet,
                     ActivityStatusViewSet, ActivityApplicationViewSet, VolunteerActivityViewSet,
-                    LoginView, RegisterView, AccountView, AutoTokenLoginView, AutoPasswdLoginView)
+                    LoginView, RegisterView, AccountView, AutoTokenLoginView, AutoPasswdLoginView,
+                    ActivityDetailView, ActivityListView)
 
 router = DefaultRouter()
 router.register(r'volunteers', VolunteerViewSet)
@@ -19,4 +20,6 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('autotokenlogin/', AutoTokenLoginView.as_view(), name='autotokenlogin'),
     path('autopasswdlogin/', AutoPasswdLoginView.as_view(), name='autopasswdlogin'),
+    path('activities/${activityId}/', ActivityDetailView.as_view(), name='activity-detail'),
+    path('activities/', ActivityListView.as_view(), name='activity-list'),
 ]

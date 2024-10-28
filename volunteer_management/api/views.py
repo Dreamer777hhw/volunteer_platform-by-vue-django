@@ -189,3 +189,60 @@ class AccountView(APIView):
             return Response({'error': 'Token解码失败'}, status=status.HTTP_401_UNAUTHORIZED)
         except Volunteer.DoesNotExist:
             return Response({'error': '用户不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+class ActivityDetailView(APIView):
+    def get(self, request, activity_id):
+        try:
+            activity = Activity.objects.get(activity_id=activity_id)
+            data = {
+                'activity_id': activity.activity_id,
+                'activity_name': activity.activity_name,
+                'activity_description': activity.activity_description,
+                'activity_tags': activity.activity_tags,
+                'image_path': activity.activity_image_path,
+                'application_requirements': activity.application_requirements,
+                'application_start_time': activity.application_start_time,
+                'application_end_time': activity.application_end_time,
+                'activity_start_time': activity.activity_start_time,
+                'activity_end_time': activity.activity_end_time,
+                'estimated_volunteer_hours': activity.estimated_volunteer_hours,
+                'activity_location': activity.activity_location,
+                'contact_name': activity.contact_name,
+                'contact_phone': activity.contact_phone,
+                'organizer': activity.organizer.name,  # 假设 Organizer 有一个 name 字段
+                'accepted_volunteers': activity.accepted_volunteers,
+                'labor_hours': activity.labor_hours,
+                'sutuo': activity.sutuo,
+                'notes': activity.notes,
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Activity.DoesNotExist:
+            return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+class ActivityListView(APIView):
+    def get(self, request):
+        activities = Activity.objects.all()
+        data = []
+        for activity in activities:
+            data.append({
+                'activity_id': activity.activity_id,
+                'activity_name': activity.activity_name,
+                'activity_description': activity.activity_description,
+                'activity_tags': activity.activity_tags,
+                'image_path': activity.activity_image_path,
+                'application_requirements': activity.application_requirements,
+                'application_start_time': activity.application_start_time,
+                'application_end_time': activity.application_end_time,
+                'activity_start_time': activity.activity_start_time,
+                'activity_end_time': activity.activity_end_time,
+                'estimated_volunteer_hours': activity.estimated_volunteer_hours,
+                'activity_location': activity.activity_location,
+                'contact_name': activity.contact_name,
+                'contact_phone': activity.contact_phone,
+                'organizer': activity.organizer.name,  # 假设 Organizer 有一个 name 字段
+                'accepted_volunteers': activity.accepted_volunteers,
+                'labor_hours': activity.labor_hours,
+                'sutuo': activity.sutuo,
+                'notes': activity.notes,
+            })
+        return Response(data, status=status.HTTP_200_OK)
