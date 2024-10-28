@@ -2,8 +2,8 @@
     * @FileDescription: 注册页面组件，包含学号、姓名、学院、专业、邮箱、手机号、密码等输入框，并进行相应的验证
     * @Author: infinity 
     * @Date: 2024-10-21 
-    * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-21 
+    * @LastEditors: infinity
+    * @LastEditTime: 2024-10-21
     * 
 
     Attention: Without backend
@@ -95,6 +95,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name: 'RegisterView',
   data() {
@@ -213,14 +214,34 @@ export default {
      * @description 注册方法，验证输入信息并存储到 localStorage
      * @return {void}
      */
-    register() {
+    async register() {
       this.validateStudentId();
       this.validateEmail();
       this.validatePassword();
+
       if (!this.studentIdError && !this.emailError && !this.passwordError) {
-        localStorage.setItem('registeredUsername', this.studentId);
-        localStorage.setItem('registeredPassword', this.password);
-        this.$router.push({ path: '/login' });
+        try {
+          const response = await axios.post('http://127.0.0.1:8000/api/register/', {
+            student_id: this.studentId,
+            name: this.name,
+            school: this.school,
+            major: this.major,
+            email: this.email,
+            phone: this.phone,
+            password: this.password,
+          });
+
+          if (response.status === 201) {
+            alert(response.data.message);
+            this.$router.push({path: '/login'});
+          }
+        } catch (error) {
+          if (error.response && error.response.data) {
+            alert("注册失败: " + JSON.stringify(error.response.data));
+          } else {
+            alert("注册失败: 网络错误");
+          }
+        }
       }
     },
   },
