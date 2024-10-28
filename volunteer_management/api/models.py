@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
 
 SCHOOL_CHOICES = [
     ('工科', '工科'),
@@ -76,24 +77,38 @@ SCHOOL_CHOICES = [
 
 
 class Volunteer(models.Model):
-    student_id = models.CharField(max_length=255, primary_key=True) # 12位数字
+    student_id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
     school = models.CharField(max_length=50, choices=SCHOOL_CHOICES)
     major = models.CharField(max_length=255)
-    email = models.EmailField() # 需要以@sjtu.edu.cn结尾
+    email = models.EmailField()  # 需要以@sjtu.edu.cn结尾
     phone = models.CharField(max_length=20)
     password = models.CharField(max_length=255)  # 加密
     application_date = models.DateField()
-    labor_hours = models.IntegerField(default=0) 
-    type_preference = models.IntegerField(default=0) 
-    duration_preference = models.IntegerField(default=0) 
+    labor_hours = models.IntegerField()  # >= 0
+    type_preference = models.IntegerField(default=0)
+    duration_preference = models.IntegerField(default=0)
+    token = models.CharField(max_length=255, default='')
+    token_expiration = models.DateTimeField(null=True)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
 
 class Organizer(models.Model):
     organizer_id = models.AutoField(primary_key=True)
-    organizer_name = models.CharField(max_length=255) 
-    account = models.CharField(max_length=255) 
+    organizer_name = models.CharField(max_length=255)
+    account = models.CharField(max_length=255)
     password = models.CharField(max_length=255)  # 加密
     application_date = models.DateField()
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
 
 class Activity(models.Model):
     activity_id = models.AutoField(primary_key=True)
@@ -129,8 +144,10 @@ class ActivityStatus(models.Model):
     activity_status = models.CharField(max_length=50, choices=[
         ('未开始', '未开始'),
         ('招募中', '招募中'),
-        ('名额已满', '名额已满'),
+        ('已招满', '已招满'),
+        ('进行中', '进行中'),
         ('已结束', '已结束'),
+        ('已取消', '已取消'),
     ])
     accepted_volunteers = models.IntegerField()
     registered_volunteers = models.IntegerField()
