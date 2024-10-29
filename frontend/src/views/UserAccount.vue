@@ -15,35 +15,11 @@
  -->
 <template>
 <div>
-  <NavBar/>
+  <NavBar />
   <div class="account-container">
     <div class="account-card">
       <h2 class="account-title">个人账户</h2>
-      <div v-if="isEditingInfo" class="info-edit">
-        <div class="info-item">
-          <span class="info-label">姓名：</span>
-          <input v-model="editName" type="text" />
-        </div>
-        <div class="info-item">
-          <span class="info-label">学院：</span>
-          <input v-model="editSchool" type="text" />
-        </div>
-        <div class="info-item">
-          <span class="info-label">专业：</span>
-          <input v-model="editMajor" type="text" />
-        </div>
-        <div class="info-item">
-          <span class="info-label">邮箱：</span>
-          <input v-model="editEmail" type="email" />
-        </div>
-        <div class="info-item">
-          <span class="info-label">手机号：</span>
-          <input v-model="editPhone" type="text" />
-        </div>
-        <button @click="submitInfoChange">提交修改</button>
-      </div>
-
-      <div v-else>
+      <div v-if="userType === 'volunteer'">
         <div class="account-info">
           <div class="info-item">
             <span class="info-label account-label">学号：</span>
@@ -75,6 +51,12 @@
           </div>
         </div>
       </div>
+      <div v-else-if="userType === 'organizer'">
+        <div class="info-item">
+          <span class="info-label account-label">姓名：</span>
+          <span class="info-value">{{ organizerName }}</span>
+        </div>
+      </div>
     </div>
 
     <button class="change-password-button" @click="goToModifyPassword">修改密码</button>
@@ -88,30 +70,11 @@
 import NavBar from '@/components/NavBar.vue';
 import axios from 'axios';
 export default {
-  name: 'VolunteerViewSet',
+  name: 'AccountView',
   components: {
     NavBar,
   },
   data() {
-    // return {
-    //   studentId: '123456',
-    //   name: '张三',
-    //   school: '计算机学院',
-    //   major: '软件工程',
-    //   email: 'zhangsan@example.com',
-    //   phone: '13800000000',
-    //   password: '123456',
-    //   isEditingInfo: false, // 是否正在修改信息
-    //   isEditingPassword: false, // 是否正在修改密码
-    //   editName: '',
-    //   editSchool: '',
-    //   editMajor: '',
-    //   editEmail: '',
-    //   editPhone: '',
-    //   newPassword: '',
-    //   confirmPassword: '',
-    //   passwordError: '',
-    // };
     return {
       studentId: '',
       name: '',
@@ -120,16 +83,8 @@ export default {
       email: '',
       phone: '',
       password: '',
-      isEditingInfo: false, // 是否正在修改信息
-      isEditingPassword: false, // 是否正在修改密码
-      editName: '',
-      editSchool: '',
-      editMajor: '',
-      editEmail: '',
-      editPhone: '',
-      newPassword: '',
-      confirmPassword: '',
-      passwordError: '',
+      organizerName: '',
+      userType: '',
     };
   },
   mounted() {
@@ -137,61 +92,44 @@ export default {
   },
   methods: {
     async fetchUserData() {
-      const token = localStorage.getItem('token'); // 从本地存储获取token
+      const token = localStorage.getItem('token');
       if (!token) {
         console.error("未找到token");
         return;
       }
 
-      try {
-        // 直接将token放入请求URL
-        const response = await axios.get(`http://127.0.0.1:8000/api/account/${token}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // 使用Token认证
-          },
-        });
-        const data = response.data;
-        this.studentId = data.student_id;
-        this.name = data.name;
-        this.school = data.school;
-        this.major = data.major;
-        this.email = data.email;
-        this.phone = data.phone;
-        // 其他字段
-      } catch (error) {
-        console.error("获取用户数据失败:", error);
+      this.userType = localStorage.getItem('user_type');
+      if (this.userType === 'volunteer') {
+        try {
+          const response = await axios.get(`http://127.0.0.1:8000/api/account/${token}/`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const data = response.data;
+          this.studentId = data.student_id;
+          this.name = data.name;
+          this.school = data.school;
+          this.major = data.major;
+          this.email = data.email;
+          this.phone = data.phone;
+          this.password = ''; // 这里你可以决定是否要显示密码
+        } catch (error) {
+          console.error("获取用户数据失败:", error);
+        }
+      } else if (this.userType === 'organizer') {
+        this.organizerName = localStorage.getItem('name'); // 从localStorage获取组织者的姓名
       }
     },
-    /**
-     * @description 信息修改
-     * @return {void}
-     */
     goToModifyInfo() {
-      this.$router.push({
-        path: '/modifyinfo',
-        query: {
-          name: this.name,
-          school: this.school,
-          major: this.major,
-          email: this.email,
-          phone: this.phone,
-        },
-      }); // Navigate to the modify info page with user data
+      this.$router.push('/modifyinfo'); // 跳转到修改信息页面
     },
-    /**
-     * @description 密码修改
-     * @return {void}
-     */
     goToModifyPassword() {
-      this.$router.push('/modifypassword'); // Navigate to the modify password page
+      this.$router.push('/modifypassword'); // 跳转到修改密码页面
     },
-    /**
-     * @description 返回主页
-     * @return {void}
-     */
     logout() {
-      // 处理注销账户逻辑
       localStorage.removeItem('token');
+      localStorage.removeItem('user_type');
       alert('注销成功，正在返回主页...');
       this.$router.push('/'); // 返回主页
     }

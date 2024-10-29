@@ -4,7 +4,7 @@ from .views import (VolunteerViewSet, OrganizerViewSet, ActivityViewSet,
                     ActivityStatusViewSet, ActivityApplicationViewSet, VolunteerActivityViewSet,
                     LoginView, RegisterView, AccountView, AutoTokenLoginView, AutoPasswdLoginView,
                     ActivityDetailView, ActivityListView, RecommendActivityView,
-                    UserActivityView)
+                    UserActivityView, PasswordChangeView)
 
 router = DefaultRouter()
 router.register(r'volunteers', VolunteerViewSet)
@@ -25,4 +25,5 @@ urlpatterns = [
     path('activities/', ActivityListView.as_view(), name='activity-list'),
     path('recommend/<str:tab>/<str:username>/', RecommendActivityView.as_view(), name='recommend-activity'),
     path('user-activities/', UserActivityView.as_view(), name='user-activity'),
+    path('changepasswd/', PasswordChangeView.as_view(), name='password_change'),
 ]

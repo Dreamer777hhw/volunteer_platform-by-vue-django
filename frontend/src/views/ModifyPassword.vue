@@ -15,10 +15,14 @@
  -->
 <template>
 <div>
-  <NavBar/>
+  <NavBar />
   <div class="modify-password-container">
     <div class="password-card">
       <h2 class="password-title">修改密码</h2>
+      <div class="info-item">
+        <span class="info-label">旧密码：</span>
+        <input v-model="oldPassword" type="password" placeholder="请输入旧密码" />
+      </div>
       <div class="info-item">
         <span class="info-label">新密码：</span>
         <input v-model="newPassword" type="password" placeholder="请输入新密码" />
@@ -36,6 +40,8 @@
 
 <script>
 import NavBar from '@/components/NavBar.vue';
+import axios from 'axios';
+
 export default {
   name: 'ModifyPasswordView',
   components: {
@@ -43,6 +49,7 @@ export default {
   },
   data() {
     return {
+      oldPassword: '',
       newPassword: '',
       confirmPassword: '',
       passwordError: '',
@@ -53,7 +60,7 @@ export default {
      * @description 提交密码修改请求
      * @return {void}
      */
-    submitPasswordChange() {
+    async submitPasswordChange() {
       if (this.newPassword !== this.confirmPassword) {
         this.passwordError = '两次输入的密码不一致！';
         return;
@@ -64,9 +71,33 @@ export default {
         return;
       }
 
-      // 处理密码修改逻辑
-      alert('密码修改成功！');
-      this.$router.push('/'); // 修改成功后返回主页
+      const token = localStorage.getItem('token'); // 从本地存储获取token
+      if (!token) {
+        this.passwordError = '未找到用户信息，请重新登录';
+        return;
+      }
+
+      try {
+        const response = await axios.post(
+          `http://127.0.0.1:8000/api/changepasswd/`,
+          { new_password: this.newPassword,
+                  old_password: this.oldPassword,
+                  token: token },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // 使用Token进行认证
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          alert('密码修改成功！');
+          this.$router.push('/account'); // 修改成功后返回主页
+        }
+      } catch (error) {
+        this.passwordError = '密码修改失败，请稍后重试';
+        console.error("修改密码时发生错误:", error);
+      }
     },
   },
 };
@@ -89,7 +120,6 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 300px;
 }
-
 
 .password-title {
   text-align: center;

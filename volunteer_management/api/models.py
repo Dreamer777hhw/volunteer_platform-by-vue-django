@@ -103,6 +103,8 @@ class Organizer(models.Model):
     account = models.CharField(max_length=255)
     password = models.CharField(max_length=255)  # 加密
     application_date = models.DateField()
+    token = models.CharField(max_length=255, default='')
+    token_expiration = models.DateTimeField(null=True)
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)

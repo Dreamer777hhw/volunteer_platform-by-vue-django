@@ -94,6 +94,8 @@ export default {
           localStorage.setItem('token', token);
           alert('登录成功！');
           localStorage.setItem('username', this.username);
+          localStorage.setItem('user_type', this.userType);
+          localStorage.setItem('name', response.data.name);
 
           if (this.rememberMe) {
             localStorage.setItem('password', this.password);
