@@ -1,18 +1,11 @@
 <!-- 
     * @FileDescription: 注册页面组件，包含学号、姓名、学院、专业、邮箱、手机号、密码等输入框，并进行相应的验证
     * @Author: infinity 
-    * @Date: 2024-10-21 
+    * @Date: 2024-10-29 
     * @LastEditors: infinity
-    * @LastEditTime: 2024-10-21
-    * 
-
-    Attention: Without backend
-
-    TODO:
-        1. 前端页面美化
-        2. 连接后端，添加注册逻辑
-
+    * @LastEditTime: 2024-10-29
  -->
+
 <template>
   <div class="register-container">
     <div class="register-card">
@@ -87,6 +80,7 @@
             />
             <span v-if="passwordError" class="error-message">{{ passwordError }}</span>
           </div>
+          <div v-if="registerError" class="register-error">{{ registerError }}</div>
         </div>
         <button class="register-button" type="submit">确认注册</button>
       </form>
@@ -111,6 +105,7 @@ export default {
       studentIdError: '',
       emailError: '',
       passwordError: '',
+      registerError: '',
       schools: {
         'engineering': '工科',
         'naval_architecture': '船舶海洋与建筑工程学院',
@@ -232,14 +227,16 @@ export default {
           });
 
           if (response.status === 201) {
-            alert(response.data.message);
+            // alert(response.data.message);
             this.$router.push({path: '/login'});
           }
         } catch (error) {
           if (error.response && error.response.data) {
-            alert("注册失败: " + JSON.stringify(error.response.data));
+            // alert("注册失败: " + JSON.stringify(error.response.data));
+            this.registerError = error.response.data.message + ", 请重试";
           } else {
-            alert("注册失败: 网络错误");
+            // alert("注册失败: 网络错误");
+            this.registerError = "网络错误，请重试";
           }
         }
       }
@@ -255,11 +252,16 @@ export default {
   align-items: center;
   height: 100vh;
   background-color: #f0f2f5;
+  background-image: url('../../public/background/background1.jpg');
+  background-size: cover;
+  background-position: center;
 }
 
 .register-card {
   background: white;
-  padding: 2rem;
+  padding-bottom: 2rem;
+  padding-left: 3rem;
+  padding-right: 3rem;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 300px;
@@ -286,12 +288,20 @@ export default {
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 5px;
+  box-sizing: border-box;
 }
 
 .error-message {
   color: red;
   font-size: 0.8rem;
   margin-top: 0.5rem;
+}
+
+.register-error {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
 }
 
 .register-button {

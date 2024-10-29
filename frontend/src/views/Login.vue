@@ -1,15 +1,9 @@
 <!-- 
     * @FileDescription: 登录页面组件，包含用户类型选择、账号密码输入、记住密码功能
     * @Author: infinity 
-    * @Date: 2024-10-21 
+    * @Date: 2024-10-29 
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-21 
-    
-    Attention: Without backend
-
-    TODO:
-        1. 前端页面美化
-        2. 连接后端，添加登录逻辑
+    * @LastEditTime: 2024-10-29
  -->
 
 <template>
@@ -33,7 +27,7 @@
           placeholder="密码"
           required
         />
-        
+        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
       </div>
       <div class="remember-me">
         <input type="checkbox" v-model="rememberMe" />
@@ -49,6 +43,7 @@
 
 <script>
 import axios from 'axios';
+import "./../assets/css/common.css";
 export default {
   name : 'LoginView',
   data() {
@@ -57,6 +52,7 @@ export default {
       password: '',
       rememberMe: false,
       userType: 'volunteer', // 默认选择为志愿者
+      errorMessage: '', 
     };
   },
   created() {
@@ -92,7 +88,7 @@ export default {
         if (response.status === 200) {
           const token = response.data.token;
           localStorage.setItem('token', token);
-          alert('登录成功！');
+          // alert('登录成功！');
           localStorage.setItem('username', this.username);
 
           if (this.rememberMe) {
@@ -108,12 +104,16 @@ export default {
       } catch (error) {
         // 处理错误
         if (error.response && error.response.data) {
-          alert("登录失败: " + JSON.stringify(error.response.data));
+          this.errorMessage = error.response.data.error + ", 请重试";
         } else {
-          alert("登录失败: 网络错误");
+          this.errorMessage = "网络错误，请重试";
         }
       }
     },
+    /**
+     * @description 自动使用 token 登录
+     * @return {void}
+     */
     async AutoTokenLogin() {
       const token = localStorage.getItem('token');
 
@@ -125,7 +125,7 @@ export default {
 
           // 登录成功处理
           if (response.status === 200) {
-            alert('自动登录成功！');
+            // alert('自动登录成功！');
             this.$router.push({ path: '/' }); // 跳转到首页
           }
         } catch (error) {
@@ -140,10 +140,14 @@ export default {
         // alert("未找到 token，请手动登录。");
       }
     },
+    /**
+     * @description 自动使用用户名和密码登录
+     * @return {void}
+     */
     async AutoPasswdLogin() {
       const userId = localStorage.getItem('user_id');
       const password = localStorage.getItem('password');
-      const userType = this.userType; // 假设你在组件中有这个变量
+      const userType = this.userType;
 
       if (userId && password) {
         try {
@@ -175,12 +179,16 @@ export default {
 </script>
 
 <style scoped>
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
   background-color: #f0f2f5;
+  background-image: url('../../public/background/background1.jpg');
+  background-size: cover;
+  background-position: center;
 }
 
 .login-card {
@@ -193,7 +201,7 @@ export default {
 
 .login-title {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   font-size: 1.5rem;
 }
 
@@ -228,6 +236,13 @@ export default {
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 5px;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
 }
 
 .remember-me {
