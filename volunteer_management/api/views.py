@@ -212,7 +212,7 @@ class ActivityDetailView(APIView):
                 'activity_location': activity.activity_location,
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
-                'organizer': activity.organizer.name,  # 假设 Organizer 有一个 name 字段
+                'organizer': activity.organizer.organizer_name,  # 假设 Organizer 有一个 name 字段
                 'accepted_volunteers': activity.accepted_volunteers,
                 'labor_hours': activity.labor_hours,
                 'sutuo': activity.sutuo,
