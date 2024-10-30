@@ -11,6 +11,10 @@ from datetime import timedelta
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Count, F, Q
 from django.contrib.auth import update_session_auth_hash
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.storage import FileSystemStorage
+import os
+from django.conf import settings
 
 class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
@@ -356,3 +360,32 @@ class PasswordChangeView(APIView):
             return Response({'error': 'Token解码失败'}, status=status.HTTP_401_UNAUTHORIZED)
         except Volunteer.DoesNotExist:
             return Response({'error': '用户不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UploadImageView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        file = request.data.get('file')
+
+        if file:
+            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'activity-images'))
+            filename = fs.save(file.name, file)
+            file_url = f"{settings.MEDIA_URL}activity-images/{filename}"  # 使用正斜杠
+
+            return Response({'url': file_url}, status=201)
+        else:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+
+class CreateActivityView(APIView):
+    def post(self, request):
+        serializer = ActivitySerializer(data=request.data)
+
+        # 检查数据是否有效
+        if serializer.is_valid():
+            serializer.save()  # 保存活动到数据库
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        # 返回验证错误
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -2,8 +2,8 @@
     * @FileDescription: 创建活动页面，用户可以在此页面创建新的活动 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-24
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-10-30
  -->
 
 <template>
@@ -155,7 +155,9 @@
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'
+import axios from 'axios';
+import NavBar from '@/components/NavBar.vue';
+
 export default {
   name: 'CreateActivityView',
   components: {
@@ -187,42 +189,78 @@ export default {
         '实习实践': '实习实践',
         '学习培训': '学习培训',
         '科创活动': '科创活动',
-      }
+      },
+      imageUrl: '', // 保存上传图片的URL
     };
   },
   methods: {
-    /** 
-     * @description 上传图片 
-     * @param {Event} event - 文件选择事件 
+    /**
+     * @description 上传图片
+     * @param {Event} event - 文件选择事件
      * @return {void}
      */
-    uploadPic(event) {
+    async uploadPic(event) {
       const file = event.target.files[0];
       const formData = new FormData();
       formData.append('file', file);
-      // TODO 上传图片逻辑
-      // 例如：axios.post('/upload', formData)
+
+      try {
+        const response = await axios.post('http://127.0.0.1:8000/api/upload/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        this.imageUrl = response.data.url; // 假设返回的图片 URL 在 response.data.url 中
+      } catch (error) {
+        console.error('图片上传失败:', error);
+      }
     },
-    /** 
-     * @description 创建活动 
+
+    /**
+     * @description 创建活动
      * @return {void}
      */
-    createActivity() {
-      // TODO 创建活动逻辑
-      // 例如：axios.post('/api/activities', { ... })
-    }
-  }
+    async createActivity() {
+      const payload = {
+        activity_name: this.activityName,
+        activity_description: this.activityDescription,
+        activity_tags: this.activityTag,
+        application_requirements: this.applicationRequirements,
+        application_start_time: this.applicationStartTime,
+        application_end_time: this.applicationEndTime,
+        activity_start_time: this.activityStartTime,
+        activity_end_time: this.activityEndTime,
+        estimated_volunteer_hours: this.volunteerHours,
+        activity_location: this.activityLocation,
+        contact_name: this.contactName,
+        contact_phone: this.contactPhone,
+        accepted_volunteers: this.acceptedVolunteers,
+        labor_hours: this.laborHours,
+        sutuo: this.sutuo,
+        notes: this.notes,
+        activity_image_path: this.imageUrl, // 使用上传的图片 URL
+        organizer: localStorage.getItem('username'), // 使用当前登录用户的用户名
+      };
+
+      try {
+        const response = await axios.post('http://127.0.0.1:8000/api/activities/', payload);
+        console.log('活动创建成功:', response.data);
+        this.$router.push('/'); // 跳转到活动页面
+      } catch (error) {
+        console.error('活动创建失败:', error);
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
-/* TODO 修改样式 */
+/* 样式保持不变 */
 .create-activity-container {
   background-color: #f0f2f5;
   display: flex;
   justify-content: center;
   align-items: center;
-
 }
 
 .create-activity-card {

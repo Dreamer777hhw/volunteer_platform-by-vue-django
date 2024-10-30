@@ -2,15 +2,15 @@
     * @FileDescription: 个人账户页面组件，包含学号、姓名、学院、专业、邮箱、手机号、密码等信息展示，以及修改信息、修改密码、注销账户等功能
     * @Author: Dreamer777hhw
     * @Date: 2024-10-22
-    * @LastEditors: infinity
-    * @LastEditTime: 2024-10-23
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-10-30
     *
 
     Attention: Without backend
 
     TODO:
         1. 前端页面美化
-        2. 连接后端
+        2. organize的界面要重新设计
 
  -->
 <template>
@@ -45,10 +45,10 @@
             <span class="info-label account-label">手机号：</span>
             <span class="info-value">{{ phone }}</span>
           </div>
-          <div class="info-item">
-            <span class="info-label account-label">密码：</span>
-            <span class="info-value">{{ '*'.repeat(password.length) }}</span>
-          </div>
+<!--          <div class="info-item">-->
+<!--            <span class="info-label account-label">密码：</span>-->
+<!--            <span class="info-value">{{ '*'.repeat(password.length) }}</span>-->
+<!--          </div>-->
         </div>
       </div>
       <div v-else-if="userType === 'organizer'">

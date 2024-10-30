@@ -1,10 +1,13 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from django.conf import settings
+from django.conf.urls.static import static
 from .views import (VolunteerViewSet, OrganizerViewSet, ActivityViewSet,
                     ActivityStatusViewSet, ActivityApplicationViewSet, VolunteerActivityViewSet,
                     LoginView, RegisterView, AccountView, AutoTokenLoginView, AutoPasswdLoginView,
                     ActivityDetailView, ActivityListView, RecommendActivityView,
-                    UserActivityView, PasswordChangeView)
+                    UserActivityView, PasswordChangeView, CreateActivityView,
+                    UploadImageView)
 
 router = DefaultRouter()
 router.register(r'volunteers', VolunteerViewSet)
@@ -26,4 +29,8 @@ urlpatterns = [
     path('recommend/<str:tab>/<str:username>/', RecommendActivityView.as_view(), name='recommend-activity'),
     path('user-activities/', UserActivityView.as_view(), name='user-activity'),
     path('changepasswd/', PasswordChangeView.as_view(), name='password_change'),
+    path('create_activity/', CreateActivityView.as_view(), name='create_activity'),
+    path('upload/', UploadImageView.as_view(), name='upload_image'),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
