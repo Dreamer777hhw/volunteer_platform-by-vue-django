@@ -10,6 +10,11 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Count, F, Q
+from django.contrib.auth import update_session_auth_hash
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.storage import FileSystemStorage
+import os
+from django.conf import settings
 
 class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
@@ -54,7 +59,7 @@ class LoginView(APIView):
                     volunteer.token_expiration = timezone.now() + timedelta(hours=1)  # 设置过期时间，例如1小时
                     volunteer.save()
 
-                    return Response({'token': token}, status=status.HTTP_200_OK)
+                    return Response({'token': token, 'name': volunteer.name}, status=status.HTTP_200_OK)
                 else:
                     return Response({'error': '账号或密码错误'}, status=status.HTTP_401_UNAUTHORIZED)
             except Volunteer.DoesNotExist:
@@ -71,7 +76,7 @@ class LoginView(APIView):
                     organizer.token_expiration = timezone.now() + timedelta(hours=1)  # 设置过期时间，例如1小时
                     organizer.save()
 
-                    return Response({'token': token}, status=status.HTTP_200_OK)
+                    return Response({'token': token, 'name': organizer.organizer_name}, status=status.HTTP_200_OK)
                 else:
                     return Response({'error': '账号或密码错误'}, status=status.HTTP_401_UNAUTHORIZED)
             except Organizer.DoesNotExist:
@@ -211,7 +216,7 @@ class ActivityDetailView(APIView):
                 'activity_location': activity.activity_location,
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
-                'organizer': activity.organizer.name,  # 假设 Organizer 有一个 name 字段
+                'organizer': activity.organizer.organizer_name,  # 假设 Organizer 有一个 name 字段
                 'accepted_volunteers': activity.accepted_volunteers,
                 'labor_hours': activity.labor_hours,
                 'sutuo': activity.sutuo,
@@ -323,3 +328,64 @@ class UserActivityView(APIView):
         # 序列化活动数据
         serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
         return paginator.get_paginated_response(serializer.data)
+
+class PasswordChangeView(APIView):
+    # permission_classes = [IsAuthenticated]
+    def post(self, request):
+        print("Received POST request")
+        try:
+            token = request.data.get('token')
+            # 解码token
+            payload = jwt.decode(token, 'your_secret_key', algorithms=['HS256'])
+            student_id = payload['user_id']  # 提取 user_id
+
+            # 查询用户信息
+            volunteer = Volunteer.objects.get(student_id=student_id)
+            old_password = request.data.get('old_password')
+            new_password = request.data.get('new_password')
+
+            # 检查旧密码是否正确
+            if not check_password(old_password, volunteer.password):
+                return Response({'error': '旧密码错误'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 更新密码
+            volunteer.password = make_password(new_password)
+            volunteer.save()
+            # 更新 session hash
+            update_session_auth_hash(request, volunteer)
+            return Response({'message': '密码修改成功'}, status=status.HTTP_200_OK)
+        except jwt.ExpiredSignatureError:
+            return Response({'error': 'Token已过期'}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.DecodeError:
+            return Response({'error': 'Token解码失败'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Volunteer.DoesNotExist:
+            return Response({'error': '用户不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UploadImageView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        file = request.data.get('file')
+
+        if file:
+            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'activity-images'))
+            filename = fs.save(file.name, file)
+            file_url = f"{settings.MEDIA_URL}activity-images/{filename}"  # 使用正斜杠
+
+            return Response({'url': file_url}, status=201)
+        else:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+
+class CreateActivityView(APIView):
+    def post(self, request):
+        serializer = ActivitySerializer(data=request.data)
+
+        # 检查数据是否有效
+        if serializer.is_valid():
+            serializer.save()  # 保存活动到数据库
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        # 返回验证错误
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

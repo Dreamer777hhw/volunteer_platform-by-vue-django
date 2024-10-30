@@ -22,7 +22,7 @@
 export default {
   data() {
     return {
-      username: 'infinity',  // TODO: 暂定为 infinity，可以根据实际登录的用户从后端获取
+      username: localStorage.getItem('name')
     };
   },
   methods: {

@@ -2,8 +2,9 @@
     * @FileDescription: 活动详情页面，展示活动的详细信息 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-24
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-10-30
+    TODO: 图片显示有问题
  -->
 
 <template>
@@ -11,7 +12,7 @@
     <NavBar />
     <div class="activity-detail-container">
       <div class="activity-view">
-        <img :src="activity.image_path" alt="活动图片" class="activity-image" />
+        <img :src="activity.activity_image_path" alt="活动图片" class="activity-image" />
         <div class="activity-info">
           <h1 class="activity-title">{{ activity.activity_name }}</h1>
           <p class="activity-time">{{ activityPeriod }}</p>
