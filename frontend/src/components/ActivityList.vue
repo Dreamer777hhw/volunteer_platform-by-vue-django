@@ -109,7 +109,7 @@ export default {
     },
     async fetchActivities() {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/activities/');
+        const response = await axios.get('http://127.0.0.1:8000/api/activitieslist/');
         this.activities = response.data;
       } catch (error) {
         console.error('获取活动数据失败:', error);

@@ -13,7 +13,7 @@
       <h3>{{ activity.activity_name }}</h3>
       <p class="application-time">{{ formatDateTime(activity.application_start_time) }} - {{ formatDateTime(activity.application_end_time) }}</p>
       <p class="contact-name">{{ activity.organizer }}</p>
-      <p class="accepted-volunteers">0 / {{ activity.accepted_volunteers }}人</p>
+      <p class="accepted-volunteers">{{activity.registered_volunteers}} / {{ activity.accepted_volunteers }}人</p>
       <div class="bottom-info">
         <p class="activity-tags">{{ activity.activity_tags }}</p>
         <p class="activity-location">{{ activity.activity_location }}</p>
