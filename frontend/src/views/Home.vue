@@ -3,7 +3,7 @@
     * @Author: infinity
     * @Date: 2024-10-22 
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-22 
+    * @LastEditTime: 2024-10-31 
  -->
 
 <template>
@@ -41,6 +41,10 @@ export default {
   padding-top: 80px; /* 给内容留出导航栏的高度 */
   display: flex;
   justify-content: center;
+  background-image: url('../../public/background/bg.webp');
+  background-repeat: repeat;
+  background-size: auto;
+  background-position: center;
 }
 
 .content-wrapper {
