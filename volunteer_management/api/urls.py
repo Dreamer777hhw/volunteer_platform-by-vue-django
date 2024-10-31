@@ -7,7 +7,7 @@ from .views import (VolunteerViewSet, OrganizerViewSet, ActivityViewSet,
                     LoginView, RegisterView, AccountView, AutoTokenLoginView, AutoPasswdLoginView,
                     ActivityDetailView, ActivityListView, RecommendActivityView,
                     UserActivityView, PasswordChangeView, CreateActivityView,
-                    UploadImageView)
+                    UploadImageView, RegisterForActivityView, UpdateActivityStatusView)
 
 router = DefaultRouter()
 router.register(r'volunteers', VolunteerViewSet)
@@ -24,13 +24,14 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('autotokenlogin/', AutoTokenLoginView.as_view(), name='autotokenlogin'),
     path('autopasswdlogin/', AutoPasswdLoginView.as_view(), name='autopasswdlogin'),
-    path('activities/${activityIdHash}/', ActivityDetailView.as_view(), name='activity-detail'),
-    path('activities/', ActivityListView.as_view(), name='activity-list'),
+    path('activity/<str:activity_id_hash>/', ActivityDetailView.as_view(), name='activity-detail'),
+    path('activitieslist/', ActivityListView.as_view(), name='activity-list'),
     path('recommend/<str:tab>/<str:username>/', RecommendActivityView.as_view(), name='recommend-activity'),
     path('user-activities/', UserActivityView.as_view(), name='user-activity'),
     path('changepasswd/', PasswordChangeView.as_view(), name='password_change'),
     path('create_activity/', CreateActivityView.as_view(), name='create_activity'),
     path('upload/', UploadImageView.as_view(), name='upload_image'),
+    path('activity/register/<str:activity_id_hash>/', RegisterForActivityView.as_view(), name='register-activity'),
+    path('update-status/', UpdateActivityStatusView.as_view(), name='update-status'),
 ]
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

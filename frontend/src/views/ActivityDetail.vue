@@ -22,7 +22,19 @@
             <p v-if="activity.contact_phone">负责人手机: {{ activity.contact_phone }}</p>
             <p v-if="activity.activity_tags">活动类型: {{ activity.activity_tags }}</p>
             <p v-if="activity.accepted_volunteers !== undefined">
-              录取人数: {{ activity.accepted_volunteers }}
+              总录取人数: {{ activity.accepted_volunteers }}
+            </p>
+            <p v-if="activity.registered_volunteers !== undefined">
+              已录取人数: {{ activity.registered_volunteers }}
+            </p>
+            <p v-if="activity.clicks_in_1h !== undefined">
+              1小时点击数: {{ activity.clicks_in_1h }}
+            </p>
+            <p v-if="activity.clicks_in_12h !== undefined">
+              12小时点击数: {{ activity.clicks_in_12h }}
+            </p>
+            <p v-if="activity.total_clicks !== undefined">
+              总点击数: {{ activity.total_clicks }}
             </p>
             <p v-if="activity.estimated_volunteer_hours">劳动时长: {{ activity.estimated_volunteer_hours }}</p>
             <p v-if="registrationPeriod">报名时间: {{ registrationPeriod }}</p>
@@ -81,21 +93,33 @@ export default {
     async fetchActivityDetail() {
       const activityIdHash = this.$route.params.activity_id_hash; // 从路由参数中获取活动 ID
       try {
-        const response = await axios.get(`http://127.0.0.1:8000/api/activities/${activityIdHash}/`);
+        const response = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/`);
         this.activity = response.data;
+        // alert(response.data['registered_volunteers']);
       } catch (error) {
         console.error("获取活动详情失败:", error);
       }
     },
     registerForActivity() {
-      // 处理报名逻辑
-      alert('报名成功！');
-      // 此处可以增加更复杂的逻辑，比如调用后端API进行报名
+      const activityIdHash = this.$route.params.activity_id_hash; // 获取活动 ID
+      axios.post(`http://127.0.0.1:8000/api/activity/register/${activityIdHash}/`)
+        .then(response => {
+            alert(response.data.message); // 显示成功消息
+        })
+        .catch(error => {
+            if (error.response) {
+                alert(error.response.data.error); // 显示错误消息
+            } else {
+                alert('报名失败，请稍后再试！');
+                console.error("报名失败:", error);
+            }
+        });
     },
   },
   mounted() {
     console.log("Activity ID Hash:", this.$route.params.activity_id_hash); // 调试输出
     this.fetchActivityDetail();
+    // alert(this.activity.image_path)
   }
 
 };

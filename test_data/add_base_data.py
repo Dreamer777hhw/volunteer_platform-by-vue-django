@@ -5,11 +5,11 @@ from pymysql import MySQLError
 
 # MySQL 连接信息
 db_config = {
-    'user': 'root',
-    'password': 'passwd',
+    'user': 'dreamer',
+    'password': 'dreamer2019',
     'host': 'localhost',  # 修改为你的 MySQL 服务器地址
     'port': 3306,
-    'database': 'volunteer_management',
+    'database': 'volunteer',
 }
 
 SCHOOL_CHOICES = [
@@ -94,8 +94,9 @@ organizer_ids = []  # 保存已插入的组织者 ID
 
 def random_date():
     # 生成去年今天到今年今天之间的随机日期
-    start_date = datetime.date.today() - datetime.timedelta(days=365)
-    return start_date + datetime.timedelta(days=random.randint(0, 365))
+    # start_date = datetime.date.today() - datetime.timedelta(days=30)
+    start_date = datetime.date.today()
+    return start_date + datetime.timedelta(days=random.randint(0, 30))
 
 
 def create_random_volunteer():
@@ -121,8 +122,12 @@ def create_random_volunteer():
     type_preference = random.randint(0, 5)
     duration_preference = random.randint(0, 5)
 
+    token = ''
+
+    token_expiration = datetime.date.today() + datetime.timedelta(days=1000)
+
     return (student_id, name, school, major, email, phone, password, application_date, labor_hours, type_preference,
-            duration_preference)
+            duration_preference, token, token_expiration)
 
 
 def create_random_organizer():
@@ -137,7 +142,11 @@ def create_random_organizer():
 
     application_date = datetime.date.today()
 
-    return (organizer_id, organizer_name, account, password, application_date)
+    token = ''
+
+    token_expiration = datetime.date.today() + datetime.timedelta(days=1000)
+
+    return (organizer_id, organizer_name, account, password, application_date, token, token_expiration)
 
 
 def create_random_activity(organizer_id):
@@ -154,7 +163,7 @@ def create_random_activity(organizer_id):
     # 随机生成开始时间在去年到今年之间
     application_start_time = random_date()
     application_end_time = application_start_time + datetime.timedelta(days=random.randint(1, 10))
-    activity_start_time = application_end_time + datetime.timedelta(days=1)
+    activity_start_time = application_end_time + datetime.timedelta(days=10)
     activity_end_time = activity_start_time + datetime.timedelta(days=random.randint(1, 10))
 
     estimated_volunteer_hours = random.randint(1, 10)
@@ -169,7 +178,7 @@ def create_random_activity(organizer_id):
     contact_phones = ['13812345678', '13823456789', '13834567890', '13845678901']
     contact_phone = random.choice(contact_phones)
 
-    accepted_volunteers = random.randint(1, 50)
+    accepted_volunteers = random.randint(50, 100)
     labor_hours = random.randint(1, 10)
     sutuo = "Some notes."
     notes = "Additional notes."
@@ -192,13 +201,13 @@ def insert_data():
             volunteer_data = create_random_volunteer()
             student_ids.append(volunteer_data[0])
             volunteer_phones.append(volunteer_data[5])
-            cursor.execute("INSERT INTO api_volunteer (student_id, name, school, major, email, phone, password, application_date, labor_hours, type_preference, duration_preference) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", volunteer_data)
+            cursor.execute("INSERT INTO api_volunteer (student_id, name, school, major, email, phone, password, application_date, labor_hours, type_preference, duration_preference, token, token_expiration) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", volunteer_data)
 
         # 插入随机组织者
         for i in range(10):
             organizer_data = create_random_organizer()
             organizer_ids.append(organizer_data[0])
-            cursor.execute("INSERT INTO api_organizer (organizer_id, organizer_name, account, password, application_date) VALUES (%s, %s, %s, %s, %s)", organizer_data)
+            cursor.execute("INSERT INTO api_organizer (organizer_id, organizer_name, account, password, application_date, token, token_expiration) VALUES (%s, %s, %s, %s, %s, %s, %s)", organizer_data)
             db.commit()  # 在这里提交，确保组织者 ID 正确
             organizer_id = organizer_data[0]  # 获取组织者 ID
 

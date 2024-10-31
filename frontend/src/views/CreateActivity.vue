@@ -243,7 +243,7 @@ export default {
       };
 
       try {
-        const response = await axios.post('http://127.0.0.1:8000/api/activities/', payload);
+        const response = await axios.post('http://127.0.0.1:8000/api/create_activity/', payload);
         console.log('活动创建成功:', response.data);
         this.$router.push('/'); // 跳转到活动页面
       } catch (error) {

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity
 from .serializers import VolunteerSerializer, OrganizerSerializer, ActivitySerializer, ActivityStatusSerializer, ActivityApplicationSerializer, VolunteerActivitySerializer
-from rest_framework.permissions import IsAuthenticated
+# from rest_framework.permissions import IsAuthenticated
 import jwt
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
@@ -13,8 +13,9 @@ from django.db.models import Count, F, Q
 from django.contrib.auth import update_session_auth_hash
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
-import os
-from django.conf import settings
+from datetime import datetime
+# import os
+# from django.conf import settings
 
 class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
@@ -201,12 +202,20 @@ class ActivityDetailView(APIView):
     def get(self, request, activity_id_hash):
         try:
             activity = Activity.objects.get(activity_id=activity_id_hash)
+            # 获取对应的活动状态
+            activitystatus = ActivityStatus.objects.get(activity_id=activity_id_hash)
+
+            activitystatus.clicks_in_1h += 1
+            activitystatus.clicks_in_12h += 1
+            activitystatus.total_clicks += 1
+            activitystatus.save()
+
             data = {
                 'activity_id': activity.activity_id,
                 'activity_name': activity.activity_name,
                 'activity_description': activity.activity_description,
                 'activity_tags': activity.activity_tags,
-                'image_path': activity.activity_image_path,
+                'activity_image_path': activity.activity_image_path,
                 'application_requirements': activity.application_requirements,
                 'application_start_time': activity.application_start_time,
                 'application_end_time': activity.application_end_time,
@@ -216,8 +225,13 @@ class ActivityDetailView(APIView):
                 'activity_location': activity.activity_location,
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
-                'organizer': activity.organizer.organizer_name,  # 假设 Organizer 有一个 name 字段
+                'organizer': activity.organizer.organizer_name,
                 'accepted_volunteers': activity.accepted_volunteers,
+                'registered_volunteers': activitystatus.registered_volunteers,
+                'activity_status': activitystatus.activity_status,
+                'clicks_in_1h': activitystatus.clicks_in_1h,
+                'clicks_in_12h': activitystatus.clicks_in_12h,
+                'total_clicks': activitystatus.total_clicks,
                 'labor_hours': activity.labor_hours,
                 'sutuo': activity.sutuo,
                 'notes': activity.notes,
@@ -225,18 +239,22 @@ class ActivityDetailView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         except Activity.DoesNotExist:
             return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
+        except ActivityStatus.DoesNotExist:
+            return Response({'error': '活动状态不存在'}, status=status.HTTP_404_NOT_FOUND)
 
 class ActivityListView(APIView):
     def get(self, request):
         activities = Activity.objects.all()
         data = []
         for activity in activities:
+            # print(activity.activity_id)
+            activitystatus = ActivityStatus.objects.get(activity_id=activity.activity_id)
             data.append({
                 'activity_id': activity.activity_id,
                 'activity_name': activity.activity_name,
                 'activity_description': activity.activity_description,
                 'activity_tags': activity.activity_tags,
-                'image_path': activity.activity_image_path,
+                'activity_image_path': activity.activity_image_path,
                 'application_requirements': activity.application_requirements,
                 'application_start_time': activity.application_start_time,
                 'application_end_time': activity.application_end_time,
@@ -246,8 +264,13 @@ class ActivityListView(APIView):
                 'activity_location': activity.activity_location,
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
-                'organizer': activity.organizer.name,  # 假设 Organizer 有一个 name 字段
+                'organizer': activity.organizer.organizer_name,
                 'accepted_volunteers': activity.accepted_volunteers,
+                'registered_volunteers': activitystatus.registered_volunteers,
+                'activity_status': activitystatus.activity_status,
+                'clicks_in_1h': activitystatus.clicks_in_1h,
+                'clicks_in_12h': activitystatus.clicks_in_12h,
+                'total_clicks': activitystatus.total_clicks,
                 'labor_hours': activity.labor_hours,
                 'sutuo': activity.sutuo,
                 'notes': activity.notes,
@@ -362,6 +385,21 @@ class PasswordChangeView(APIView):
             return Response({'error': '用户不存在'}, status=status.HTTP_404_NOT_FOUND)
 
 
+# class UploadImageView(APIView):
+#     parser_classes = (MultiPartParser, FormParser)
+#
+#     def post(self, request, *args, **kwargs):
+#         file = request.data.get('file')
+#
+#         if file:
+#             fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'activity-images'))
+#             filename = fs.save(file.name, file)
+#             file_url = f"{settings.MEDIA_URL}activity-images/{filename}"  # 使用正斜杠
+#
+#             return Response({'url': file_url}, status=201)
+#         else:
+#             return Response({'error': 'No file uploaded'}, status=400)
+
 class UploadImageView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
@@ -369,9 +407,11 @@ class UploadImageView(APIView):
         file = request.data.get('file')
 
         if file:
-            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'activity-images'))
+            # 修改存储路径为frontend/public下
+            storage_location = r'D:\jiaotongdaxue\web_developmet\volunteer_management\frontend\public\activity-images'
+            fs = FileSystemStorage(location=storage_location)
             filename = fs.save(file.name, file)
-            file_url = f"{settings.MEDIA_URL}activity-images/{filename}"  # 使用正斜杠
+            file_url = f"/activity-images/{filename}"  # 访问时使用相对路径
 
             return Response({'url': file_url}, status=201)
         else:
@@ -384,8 +424,83 @@ class CreateActivityView(APIView):
 
         # 检查数据是否有效
         if serializer.is_valid():
-            serializer.save()  # 保存活动到数据库
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            activity = serializer.save()  # 保存活动到数据库
+
+            # 创建对应的 ActivityStatus 实例
+            activity_status_data = {
+                'activity': activity.activity_id,  # 设置活动为刚创建的活动
+                'activity_status': '未开始',  # 初始状态
+                'accepted_volunteers': activity.accepted_volunteers,  # 根据需求设定
+                'registered_volunteers': 0,  # 初始报名人数为 0
+                'clicks_in_1h': 0,
+                'clicks_in_12h': 0,
+                'total_clicks': 0,
+            }
+            status_serializer = ActivityStatusSerializer(data=activity_status_data)
+
+            if status_serializer.is_valid():
+                status_serializer.save()  # 保存活动状态到数据库
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(status_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # 返回验证错误
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RegisterForActivityView(APIView):
+    def post(self, request, activity_id_hash):
+        try:
+            activity = Activity.objects.get(activity_id=activity_id_hash)
+            # 假设这里进行报名逻辑，比如检查名额、更新数据库等
+            activity_status = ActivityStatus.objects.get(activity=activity)
+
+            if activity_status.registered_volunteers < activity_status.accepted_volunteers:
+                activity_status.registered_volunteers += 1
+                activity_status.save()
+                return Response({'message': '报名成功！'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': '名额已满！'}, status=status.HTTP_400_BAD_REQUEST)
+        except Activity.DoesNotExist:
+            return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
+        except ActivityStatus.DoesNotExist:
+            return Response({'error': '活动状态不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UpdateActivityStatusView(APIView):
+    def get(self, request):
+        try:
+            # 获取所有活动状态并更新
+            activity_statuses = ActivityStatus.objects.all()
+            for activity_status in activity_statuses:
+                activity = activity_status.activity
+
+                # 获取当前时间（时区感知）
+                now = timezone.now()
+
+                # 将活动的开始和结束时间转换为中国时区
+                application_start_time = activity.application_start_time.astimezone(timezone.get_default_timezone())
+                application_end_time = activity.application_end_time.astimezone(timezone.get_default_timezone())
+                activity_start_time = activity.activity_start_time.astimezone(timezone.get_default_timezone())
+                activity_end_time = activity.activity_end_time.astimezone(timezone.get_default_timezone())
+
+                # 判断活动的状态并更新
+                if now < application_start_time:
+                    activity_status.activity_status = '未开始'
+                elif now < application_end_time and activity_status.registered_volunteers < activity_status.accepted_volunteers:
+                    activity_status.activity_status = '招募中'
+                elif activity_status.registered_volunteers >= activity_status.accepted_volunteers:
+                    activity_status.activity_status = '已招满'
+                elif now >= activity_start_time and now < activity_end_time:
+                    activity_status.activity_status = '进行中'
+                elif now >= activity_end_time:
+                    activity_status.activity_status = '已结束'
+                else:
+                    activity_status.activity_status = '已取消'  # 其他情况，视为已取消
+
+                # 保存更新
+                activity_status.save()
+
+            return Response({'message': '活动状态更新成功'}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

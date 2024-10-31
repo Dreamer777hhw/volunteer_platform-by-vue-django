@@ -5,9 +5,9 @@ import pymysql
 # 数据库配置
 db_config = {
     'host': 'localhost',  # 根据实际情况修改
-    'user': 'root',
-    'password': 'passwd',
-    'database': 'volunteer_management',
+    'user': 'dreamer',
+    'password': 'dreamer2019',
+    'database': 'volunteer',
 }
 
 # 选择活动状态
@@ -38,11 +38,11 @@ def insert_data():
         # 插入 ActivityStatus
         for activity_id in activity_ids:
             activity_status = random.choice(activity_status_choices)
-            accepted_volunteers = random.randint(0, 100)
-            registered_volunteers = random.randint(0, 100)
+            registered_volunteers = random.randint(0, 50)
+            accepted_volunteers = registered_volunteers + random.randint(0, 50)
             clicks_in_1h = random.randint(0, 50)
-            clicks_in_12h = random.randint(0, 200)
-            total_clicks = random.randint(0, 1000)
+            clicks_in_12h = clicks_in_1h + random.randint(0, 200)
+            total_clicks = clicks_in_12h + random.randint(0, 1000)
 
             cursor.execute("""
                 INSERT INTO api_activitystatus (activity_id, activity_status, accepted_volunteers, registered_volunteers, clicks_in_1h, clicks_in_12h, total_clicks)
