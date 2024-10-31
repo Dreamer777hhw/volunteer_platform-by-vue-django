@@ -2,16 +2,8 @@
     * @FileDescription: 个人账户页面组件，包含学号、姓名、学院、专业、邮箱、手机号、密码等信息展示，以及修改信息、修改密码、注销账户等功能
     * @Author: Dreamer777hhw
     * @Date: 2024-10-22
-    * @LastEditors: dreamer777hhw
-    * @LastEditTime: 2024-10-30
-    *
-
-    Attention: Without backend
-
-    TODO:
-        1. 前端页面美化
-        2. organize的界面要重新设计
-
+    * @LastEditors: infinity
+    * @LastEditTime: 2024-10-31
  -->
 <template>
 <div>
@@ -45,15 +37,11 @@
             <span class="info-label account-label">手机号：</span>
             <span class="info-value">{{ phone }}</span>
           </div>
-<!--          <div class="info-item">-->
-<!--            <span class="info-label account-label">密码：</span>-->
-<!--            <span class="info-value">{{ '*'.repeat(password.length) }}</span>-->
-<!--          </div>-->
         </div>
       </div>
       <div v-else-if="userType === 'organizer'">
         <div class="info-item">
-          <span class="info-label account-label">姓名：</span>
+          <span class="info-label account-label">组织名：</span>
           <span class="info-value">{{ organizerName }}</span>
         </div>
       </div>
@@ -67,6 +55,7 @@
 </template>
 
 <script>
+import "./../assets/css/common.css";
 import NavBar from '@/components/NavBar.vue';
 import axios from 'axios';
 export default {
@@ -91,6 +80,10 @@ export default {
     this.fetchUserData();
   },
   methods: {
+    /**
+     * @description 获取用户数据
+     * @return {void}
+     */
     async fetchUserData() {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -113,7 +106,7 @@ export default {
           this.major = data.major;
           this.email = data.email;
           this.phone = data.phone;
-          this.password = ''; // 这里你可以决定是否要显示密码
+          this.password = ''; 
         } catch (error) {
           console.error("获取用户数据失败:", error);
         }
@@ -121,12 +114,24 @@ export default {
         this.organizerName = localStorage.getItem('name'); // 从localStorage获取组织者的姓名
       }
     },
+    /**
+     * @description 跳转到修改信息页面
+     * @return {void}
+     */
     goToModifyInfo() {
       this.$router.push('/modifyinfo'); // 跳转到修改信息页面
     },
+    /**
+     * @description 跳转到修改密码页面
+     * @return {void}
+     */
     goToModifyPassword() {
       this.$router.push('/modifypassword'); // 跳转到修改密码页面
     },
+    /**
+     * @description 注销账户
+     * @return {void}
+     */
     logout() {
       localStorage.removeItem('token');
       localStorage.removeItem('user_type');
@@ -139,12 +144,15 @@ export default {
 
 <style scoped>
 .account-container {
-  padding-top: 100px;
+  padding-top: 130px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f0f2f5;
-  height: 85vh;
+  height: 82vh;
+  background-image: url('../../public/background/bg.webp');
+  background-repeat: repeat;
+  background-size: auto;
+  background-position: center;
 }
 
 .account-card {
@@ -199,10 +207,10 @@ export default {
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 0.2rem 0.5rem;
+  padding: 0.5rem;
   cursor: pointer;
-  margin-left: 10px;
-  width: 25%;
+  margin-top: 1rem;
+  width: 360px;
 }
 
 .error-message {
@@ -212,9 +220,9 @@ export default {
 }
 
 button {
-  width: 100%;
+  width: 360px;
   padding: 0.5rem;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
   background-color: #007bff;
   color: white;
   border: none;
@@ -227,7 +235,7 @@ button:hover {
 }
 
 .logout-button {
-  width: 25%;
+  width: 360px;
   margin-top: 1rem;
   background-color: #dc3545;
 }

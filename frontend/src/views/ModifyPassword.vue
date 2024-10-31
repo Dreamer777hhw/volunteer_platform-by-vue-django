@@ -3,15 +3,8 @@
     * @Author: Dreamer777hhw
     * @Date: 2024-10-23
     * @LastEditors: infinity
-    * @LastEditTime: 2024-10-23
+    * @LastEditTime: 2024-10-31
     *
-
-    Attention: Without backend
-
-    TODO:
-        1. 前端页面美化
-        2. 链接后端
-
  -->
 <template>
 <div>
@@ -20,8 +13,8 @@
     <div class="password-card">
       <h2 class="password-title">修改密码</h2>
       <div class="info-item">
-        <span class="info-label">旧密码：</span>
-        <input v-model="oldPassword" type="password" placeholder="请输入旧密码" />
+        <span class="info-label">原密码：</span>
+        <input v-model="oldPassword" type="password" placeholder="请输入原密码" />
       </div>
       <div class="info-item">
         <span class="info-label">新密码：</span>
@@ -95,7 +88,7 @@ export default {
           this.$router.push('/account'); // 修改成功后返回主页
         }
       } catch (error) {
-        this.passwordError = '密码修改失败，请稍后重试';
+        this.passwordError = '原密码错误，请重试';
         console.error("修改密码时发生错误:", error);
       }
     },
@@ -109,7 +102,10 @@ export default {
   justify-content: center;
   align-items: center;
   height: 90vh;
-  background-color: #f0f2f5;
+  background-image: url('../../public/background/bg.webp');
+  background-repeat: repeat;
+  background-size: auto;
+  background-position: center;
   padding: 2rem;
 }
 
@@ -129,6 +125,15 @@ export default {
 
 .info-item {
   margin-bottom: 1rem;
+}
+
+.info-item input {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 90%;
 }
 
 .error-message {

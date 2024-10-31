@@ -1,9 +1,9 @@
 <!-- 
     * @FileDescription: 推荐活动组件，包含猜你喜欢和热门活动两个标签页，以及活动卡片列表
     * @Author: infinity 
-    * @Date: 2024-10-22 
+    * @Date: 2024-10-31 
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-22 
+    * @LastEditTime: 2024-10-31 
  -->
 
 <template>
@@ -11,8 +11,12 @@
     <div class="recommend-section">
       <div class="recommend-header">
         <div class="buttons">
-          <button :class="{'active': currentTab === 'recommend'}" @click="fetchActivities('recommend')">猜你喜欢</button>
-          <button :class="{'active': currentTab === 'hot'}" @click="fetchActivities('hot')">热门活动</button>
+          <button :class="{'active': currentTab === 'recommend'}" @click="fetchActivities('recommend')">
+            <i class="icon-recommend"></i>猜你喜欢
+          </button>
+          <button :class="{'active': currentTab === 'hot'}" @click="fetchActivities('hot')">
+            <i class="icon-hot"></i>热门活动
+          </button>
         </div>
       </div>
 
@@ -38,11 +42,20 @@ export default {
     };
   },
   computed: {
+    /**
+     * @description 过滤后的活动数据
+     * @return {Array} 返回获取到的活动数据
+     */
     filteredActivities() {
       return this.activities; // 返回获取到的活动数据
     },
   },
   methods: {
+    /**
+     * @description 获取活动数据
+     * @param {string} tab 当前标签页（'recommend' 或 'hot'）
+     * @return {void}
+     */
     async fetchActivities(tab) {
       try {
         this.currentTab = tab; // 更新当前标签
@@ -60,3 +73,28 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.buttons {
+  display: flex;
+  gap: 20px; 
+}
+
+button {
+  font-size: 24px; 
+  border: none; 
+  background: none; 
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding-bottom: 10px;
+}
+
+button i {
+  margin-right: 8px; 
+}
+
+button.active {
+  color: orange; 
+}
+</style>
