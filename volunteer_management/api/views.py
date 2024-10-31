@@ -13,6 +13,7 @@ from django.db.models import Count, F, Q
 from django.contrib.auth import update_session_auth_hash
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
+from django.shortcuts import get_object_or_404
 from datetime import datetime
 # import os
 # from django.conf import settings
@@ -475,15 +476,40 @@ class CreateActivityView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterForActivityView(APIView):
-    def post(self, request, activity_id_hash):
+    def post(self, request, activity_id_hash, user_id):
         try:
+            # 获取活动对象
             activity = Activity.objects.get(activity_id=activity_id_hash)
-            # 假设这里进行报名逻辑，比如检查名额、更新数据库等
+
+            # 获取活动状态对象
             activity_status = ActivityStatus.objects.get(activity=activity)
 
+            # 检查名额是否充足
             if activity_status.registered_volunteers < activity_status.accepted_volunteers:
+                # 增加已报名人数
                 activity_status.registered_volunteers += 1
                 activity_status.save()
+
+                # 获取志愿者对象
+                student = Volunteer.objects.get(student_id=user_id)
+
+                # 创建新的报名记录
+                application = ActivityApplication(
+                    student=student,
+                    activity=activity,
+                    application_result='待审核',  # 默认状态
+                    application_date=timezone.now()  # 当前时间
+                )
+                application.save()
+
+                # 创建 VolunteerActivity 记录
+                volunteer_activity = VolunteerActivity(
+                    student=student,
+                    activity=activity,
+                    activity_result='已报名'  # 设置状态为已报名
+                )
+                volunteer_activity.save()
+
                 return Response({'message': '报名成功！'}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': '名额已满！'}, status=status.HTTP_400_BAD_REQUEST)
@@ -491,6 +517,8 @@ class RegisterForActivityView(APIView):
             return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
         except ActivityStatus.DoesNotExist:
             return Response({'error': '活动状态不存在'}, status=status.HTTP_404_NOT_FOUND)
+        except Volunteer.DoesNotExist:
+            return Response({'error': '志愿者不存在'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class UpdateActivityStatusView(APIView):
@@ -531,3 +559,26 @@ class UpdateActivityStatusView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ActivityRegistrationsView(APIView):
+    def get(self, request, activity_id_hash, user_id):
+        # 获取活动对象
+        activity = get_object_or_404(Activity, activity_id=activity_id_hash)
+
+        # 根据 user_id 获取该用户的报名记录
+        registrations = VolunteerActivity.objects.filter(activity=activity, student_id=user_id)
+
+        # 提取用户 ID 和状态
+        registration_data = [
+            {
+                "student_id": registration.student_id,
+                "activity_result": registration.activity_result
+            }
+            for registration in registrations
+        ]
+
+        if not registration_data:
+            return Response({'message': '未找到该用户的报名记录。'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(registration_data, status=status.HTTP_200_OK)
