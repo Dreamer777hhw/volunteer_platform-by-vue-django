@@ -24,6 +24,7 @@ import NavBar from '@/components/NavBar.vue';
 import BannerComponent from '@/components/Banner.vue';
 import RecommendComponent from '@/components/Recommend.vue';
 import ActivityListComponent from '@/components/ActivityList.vue';
+import axios from 'axios';
 
 export default {
   name: 'HomeView',
@@ -32,6 +33,20 @@ export default {
     BannerComponent,
     RecommendComponent,
     ActivityListComponent,
+  },
+  async mounted() {
+    await this.updateActivityStatus();
+  },
+  methods: {
+    async updateActivityStatus() {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/update-status/');
+        console.log('活动状态更新成功:', response.data);
+        // 可以在这里处理更新后的状态，比如将其存储到 Vuex 或组件的状态中
+      } catch (error) {
+        console.error('更新活动状态失败:', error);
+      }
+    },
   },
 };
 </script>

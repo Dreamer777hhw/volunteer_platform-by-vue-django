@@ -55,7 +55,7 @@ export default {
   data() {
     return {
       labels: ["讲坛讲座", "志愿公益", "劳动教育", "文体活动", "实习实践", "学习培训", "科创活动"],
-      statuses: ["未开始", "招募中", "进行中"],
+      statuses: ["未开始", "招募中", "已招满", '进行中', '已结束', '已取消'],
       selectedLabels: [],
       selectedStatuses: [],
       searchQuery: "",

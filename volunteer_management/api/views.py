@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity
 from .serializers import VolunteerSerializer, OrganizerSerializer, ActivitySerializer, ActivityStatusSerializer, ActivityApplicationSerializer, VolunteerActivitySerializer
-from rest_framework.permissions import IsAuthenticated
+# from rest_framework.permissions import IsAuthenticated
 import jwt
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
@@ -13,8 +13,9 @@ from django.db.models import Count, F, Q
 from django.contrib.auth import update_session_auth_hash
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
-import os
-from django.conf import settings
+from datetime import datetime
+# import os
+# from django.conf import settings
 
 class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
@@ -463,3 +464,43 @@ class RegisterForActivityView(APIView):
             return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
         except ActivityStatus.DoesNotExist:
             return Response({'error': '活动状态不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UpdateActivityStatusView(APIView):
+    def get(self, request):
+        try:
+            # 获取所有活动状态并更新
+            activity_statuses = ActivityStatus.objects.all()
+            for activity_status in activity_statuses:
+                activity = activity_status.activity
+
+                # 获取当前时间（时区感知）
+                now = timezone.now()
+
+                # 将活动的开始和结束时间转换为中国时区
+                application_start_time = activity.application_start_time.astimezone(timezone.get_default_timezone())
+                application_end_time = activity.application_end_time.astimezone(timezone.get_default_timezone())
+                activity_start_time = activity.activity_start_time.astimezone(timezone.get_default_timezone())
+                activity_end_time = activity.activity_end_time.astimezone(timezone.get_default_timezone())
+
+                # 判断活动的状态并更新
+                if now < application_start_time:
+                    activity_status.activity_status = '未开始'
+                elif now < application_end_time and activity_status.registered_volunteers < activity_status.accepted_volunteers:
+                    activity_status.activity_status = '招募中'
+                elif activity_status.registered_volunteers >= activity_status.accepted_volunteers:
+                    activity_status.activity_status = '已招满'
+                elif now >= activity_start_time and now < activity_end_time:
+                    activity_status.activity_status = '进行中'
+                elif now >= activity_end_time:
+                    activity_status.activity_status = '已结束'
+                else:
+                    activity_status.activity_status = '已取消'  # 其他情况，视为已取消
+
+                # 保存更新
+                activity_status.save()
+
+            return Response({'message': '活动状态更新成功'}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
