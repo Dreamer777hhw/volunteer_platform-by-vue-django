@@ -13,6 +13,7 @@ from django.db.models import Count, F, Q
 from django.contrib.auth import update_session_auth_hash
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
+from django.utils.text import slugify
 from datetime import datetime
 # import os
 # from django.conf import settings
@@ -404,18 +405,24 @@ class UploadImageView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
+        activity_name = request.data.get('activity_name')
         file = request.data.get('file')
 
-        if file:
+        if activity_name and file:
+            # 使用活动名称生成安全的文件名
+            # safe_activity_name = slugify(activity_name)  # 将活动名称转换为安全的文件名
+            # filename = f"{safe_activity_name}.png"  # 使用活动名称作为文件名
+            filename = f"{activity_name}.png"  # 使用活动名称作为文件名
             # 修改存储路径为frontend/public下
             storage_location = r'D:\jiaotongdaxue\web_developmet\volunteer_management\frontend\public\activity-images'
             fs = FileSystemStorage(location=storage_location)
-            filename = fs.save(file.name, file)
+            fs.save(filename, file)  # 保存文件
+
             file_url = f"/activity-images/{filename}"  # 访问时使用相对路径
 
             return Response({'url': file_url}, status=201)
         else:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'Activity name or file not provided'}, status=400)
 
 
 class CreateActivityView(APIView):
@@ -504,3 +511,22 @@ class UpdateActivityStatusView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpcomingActivitiesView(APIView):
+    def get(self, request):
+        now = timezone.now()
+        # 获取开始时间在未来一周内的活动
+        upcoming_activities = Activity.objects.filter(activity_start_time__gte=now).order_by('activity_start_time')[:5]
+
+        # 构建响应数据
+        activities_data = [
+            {
+                'name': activity.activity_name,
+                'start_time': activity.activity_start_time,
+                'link': f'/activity/detail/{activity.activity_id}'  # 假设使用活动 ID 作为链接
+            }
+            for activity in upcoming_activities
+        ]
+
+        return Response(activities_data, status=status.HTTP_200_OK)

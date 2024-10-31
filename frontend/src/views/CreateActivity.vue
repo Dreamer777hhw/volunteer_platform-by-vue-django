@@ -203,6 +203,8 @@ export default {
       const file = event.target.files[0];
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('activity_name', this.activityName);
+      alert(this.activityName)
 
       try {
         const response = await axios.post('http://127.0.0.1:8000/api/upload/', formData, {

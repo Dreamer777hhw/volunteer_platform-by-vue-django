@@ -9,21 +9,18 @@
 <template>
   <div class="banner-container">
     <div class="banner">
-      <!-- 图片轮播 -->
       <div class="banner-images">
         <img
           v-for="(image, index) in images"
           :key="index"
-          :src="`/banner-images/2024-10-21-1/${image.name}`"
+          :src="`/activity-images/${image.name}`"
           :alt="image.alt"
           :class="{ active: currentImage === index }"
           @click="navigateToDetail(image.link)"
         />
-        <!-- 左右切换按钮 -->
         <button class="prev" @click="prevImage">‹</button>
         <button class="next" @click="nextImage">›</button>
       </div>
-      <!-- 指示点 -->
       <div class="banner-dots">
         <span
           v-for="(image, index) in images"
@@ -37,23 +34,37 @@
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name: 'BannerComponent',
   data() {
     return {
       images: [
         // TODO: 选择合适的分辨率图片 从后端获取相应的数据
-        { name: 'banner-1.jpg', alt: 'Banner 1', link: '/activity/detail/ABCDEFG' },
-        { name: 'banner-2.jpg', alt: 'Banner 2', link: '/activity/detail/HIJKLMN' },
-        { name: 'banner-3.jpg', alt: 'Banner 3', link: '/activity/detail/OPQRSTU' },
-        { name: 'banner-4.jpg', alt: 'Banner 4', link: '/activity/detail/VWXYZAB' },
-        { name: 'banner-5.jpg', alt: 'Banner 5', link: '/activity/detail/CDEFGHI' },
+        // { name: 'banner-1.jpg', alt: 'Banner 1', link: '/activity/detail/ABCDEFG' },
+        // { name: 'banner-2.jpg', alt: 'Banner 2', link: '/activity/detail/HIJKLMN' },
+        // { name: 'banner-3.jpg', alt: 'Banner 3', link: '/activity/detail/OPQRSTU' },
+        // { name: 'banner-4.jpg', alt: 'Banner 4', link: '/activity/detail/VWXYZAB' },
+        // { name: 'banner-5.jpg', alt: 'Banner 5', link: '/activity/detail/CDEFGHI' },
       ],
       currentImage: 0,
       intervalId: null,
     };
   },
   methods: {
+    async fetchUpcomingActivities() {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/upcoming-activities/');
+        // 假设返回的活动数据包含 activity_name 和 link
+        this.images = response.data.map(activity => ({
+          name: `${activity.name}.png`,
+          alt: activity.name,
+          link: activity.link
+        }));
+      } catch (error) {
+        console.error("获取即将开始的活动失败:", error);
+      }
+    },
     /**
      * 切换到下一张图片
      */
@@ -104,7 +115,8 @@ export default {
     },
   },
   mounted() {
-    this.startAutoSlide(); 
+    this.startAutoSlide();
+    this.fetchUpcomingActivities();
   },
   beforeUnmount() {
     this.stopAutoSlide(); 
