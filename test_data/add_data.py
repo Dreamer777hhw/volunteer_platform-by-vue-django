@@ -17,7 +17,9 @@ activity_status_choices = ['未开始', '招募中', '已招满', '进行中', '
 application_result_choices = ['待审核', '未通过', '已通过']
 
 # 选择活动参与结果
-activity_result_choices = ['已参与', '未参与', '参与中', '已报名', '已录取', '未录取', '已取消']
+volunteer_activity_result = ['已参与', '未参与', '参与中', '已报名', '已录取', '未录取', '已取消']
+
+organizer_activity_result = ['未开始', '招募中', '已招满', '进行中', '已结束', '已取消']
 
 def insert_data():
     try:
@@ -65,7 +67,7 @@ def insert_data():
         for volunteer_id in volunteer_ids:
             for _ in range(random.randint(1, 3)):  # 为每个志愿者随机插入 1 到 3 个活动
                 activity_id = random.choice(activity_ids)
-                activity_result = random.choice(activity_result_choices)
+                activity_result = random.choice(volunteer_activity_result)
 
                 # 检查是否已经存在相同的 student_id 和 activity_id 组合
                 cursor.execute("""
@@ -80,12 +82,20 @@ def insert_data():
         # 插入 OrganizerActivity
         for organizer_id in organizer_ids:
             for activity_id in activity_ids:
-                activity_result = random.choice(activity_result_choices)
-
+                # 检查 api_activity 表中是否存在对应的 activity_id 和 organizer_id
                 cursor.execute("""
-                    INSERT INTO api_organizeractivity (organizer_id, activity_id, activity_result)
-                    VALUES (%s, %s, %s)
-                """, (organizer_id, activity_id, activity_result))
+                    SELECT COUNT(*) FROM api_activity
+                    WHERE activity_id = %s AND organizer_id = %s
+                """, (activity_id, organizer_id))
+                count = cursor.fetchone()[0]
+
+                if count > 0:  # 只有当活动和组织者的对应关系存在时才插入
+                    activity_result = random.choice(organizer_activity_result)
+
+                    cursor.execute("""
+                        INSERT INTO api_organizeractivity (organizer_id, activity_id, activity_result)
+                        VALUES (%s, %s, %s)
+                    """, (organizer_id, activity_id, activity_result))
 
         db.commit()
         print("Data inserted successfully.")

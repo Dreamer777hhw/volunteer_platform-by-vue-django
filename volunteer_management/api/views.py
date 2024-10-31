@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity
+from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity, OrganizerActivity
 from .serializers import VolunteerSerializer, OrganizerSerializer, ActivitySerializer, ActivityStatusSerializer, ActivityApplicationSerializer, VolunteerActivitySerializer
 # from rest_framework.permissions import IsAuthenticated
 import jwt
@@ -277,6 +277,7 @@ class ActivityListView(APIView):
             })
         return Response(data, status=status.HTTP_200_OK)
 
+
 class RecommendActivityView(APIView):
     def get(self, request, tab, username):
         if tab == 'recommend':
@@ -288,13 +289,14 @@ class RecommendActivityView(APIView):
             # 筛选当前用户最喜爱的活动类型
             user_favorite_tags = VolunteerActivity.objects.filter(student_id=username).values(
                 'activity__activity_tags').annotate(count=Count('activity')).order_by('-count')
+
             # 如果用户有最喜欢的标签，按标签筛选活动
             if user_favorite_tags.exists():
                 for user_favorite_tag in user_favorite_tags:
                     tag = user_favorite_tag['activity__activity_tags']
                     # 从招募中的活动中筛选出包含该标签的活动
-                    tagged_activities = activities.filter(activity_tags=tag).values()[:1]  # 每个标签取最多3个活动
-                    activity_data.extend(tagged_activities)  # 将找到的活动添加到结果列表中
+                    tagged_activities = activities.filter(activity_tags=tag)[:3]  # 每个标签最多取3个活动
+                    activity_data.extend(tagged_activities)  # 将找到的活动添加到结果列表
 
                     # 如果已经找到了3个活动，退出循环
                     if len(activity_data) >= 3:
@@ -302,19 +304,22 @@ class RecommendActivityView(APIView):
 
             # 如果没有找到用户喜欢的活动，则返回所有招募中的活动
             if not activity_data:
-                activity_data = list(activities.values())[:3]  # 限制返回3个活动
+                activity_data = list(activities)[:3]  # 限制返回3个活动
 
-            return Response(list(activity_data)[:3])  # 确保返回的列表最多为3个活动
+            # 使用 ActivitySerializer 进行序列化
+            serializer = ActivitySerializer(activity_data, many=True)
+            return Response(serializer.data)  # 返回序列化后的活动数据
 
         elif tab == 'hot':
             hot_activities = Activity.objects.filter(
                 activitystatus__activity_status='进行中'
             ).annotate(total_clicks=F('activitystatus__total_clicks')).order_by('-total_clicks')[:3]
-            # 只选择需要的字段，并将结果转换为列表
-            activity_data = list(hot_activities.values())[:3]  # 确保最多返回3个活动
-            return Response(activity_data)  # 直接返回活动列表
 
-        return Response({'error': '无效的标签'}, status=400)
+            # 使用 ActivitySerializer 进行序列化
+            serializer = ActivitySerializer(hot_activities, many=True)
+            return Response(serializer.data)  # 返回序列化后的活动数据
+
+        return Response({'error': '无效的标签'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserActivityPagination(PageNumberPagination):
@@ -325,32 +330,54 @@ class UserActivityPagination(PageNumberPagination):
 class UserActivityView(APIView):
     def get(self, request):
         user_id = request.GET.get('user_id')
-        if not user_id:
-            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        user_type = request.GET.get('user_type')  # 假设前端会传递 user_type
+        if not user_id or not user_type:
+            return Response({'error': 'user_id and user_type are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 获取用户参与的活动
-        volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
+        # 根据用户类型获取活动
+        if user_type == 'volunteer':
+            volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
+
+        elif user_type == 'organizer':
+            organizer_activities = OrganizerActivity.objects.filter(organizer_id=user_id)
+
+        else:
+            return Response({'error': 'Invalid user_type'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 处理状态过滤
         status_filter = request.GET.get('status')
         if status_filter:
-            volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
+            if user_type == 'volunteer':
+                volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
+            elif user_type == 'organizer':
+                organizer_activities = organizer_activities.filter(activity_result=status_filter)
 
         # 处理搜索查询
         search_query = request.GET.get('search')
         if search_query:
-            volunteer_activities = volunteer_activities.filter(
-                Q(activity__activity_name__icontains=search_query) |
-                Q(activity__activity_location__icontains=search_query) |
-                Q(activity__organizer__name__icontains=search_query)  # 假设你有一个组织者的名字字段
-            )
+            if user_type == 'volunteer':
+                volunteer_activities = volunteer_activities.filter(
+                    Q(activity__activity_name__icontains=search_query) |
+                    Q(activity__activity_location__icontains=search_query) |
+                    Q(activity__organizer__organizer_name__icontains=search_query)  # 注意这里的连接
+                )
+            elif user_type == 'organizer':
+                organizer_activities = organizer_activities.filter(
+                    Q(activity__activity_name__icontains=search_query) |
+                    Q(activity__activity_location__icontains=search_query)
+                )
 
+        # 分页处理
         paginator = UserActivityPagination()
-        paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
+        if user_type == 'volunteer':
+            paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
+            serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
+        else:
+            paginated_activities = paginator.paginate_queryset(organizer_activities, request)
+            serializer = ActivitySerializer([oa.activity for oa in paginated_activities], many=True)
 
-        # 序列化活动数据
-        serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 class PasswordChangeView(APIView):
     # permission_classes = [IsAuthenticated]
