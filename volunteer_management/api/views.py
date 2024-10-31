@@ -432,18 +432,24 @@ class UploadImageView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
+        activity_name = request.data.get('activity_name')
         file = request.data.get('file')
 
-        if file:
+        if activity_name and file:
+            # 使用活动名称生成安全的文件名
+            # safe_activity_name = slugify(activity_name)  # 将活动名称转换为安全的文件名
+            # filename = f"{safe_activity_name}.png"  # 使用活动名称作为文件名
+            filename = f"{activity_name}.png"  # 使用活动名称作为文件名
             # 修改存储路径为frontend/public下
             storage_location = r'D:\jiaotongdaxue\web_developmet\volunteer_management\frontend\public\activity-images'
             fs = FileSystemStorage(location=storage_location)
-            filename = fs.save(file.name, file)
+            fs.save(filename, file)  # 保存文件
+
             file_url = f"/activity-images/{filename}"  # 访问时使用相对路径
 
             return Response({'url': file_url}, status=201)
         else:
-            return Response({'error': 'No file uploaded'}, status=400)
+            return Response({'error': 'Activity name or file not provided'}, status=400)
 
 
 class CreateActivityView(APIView):

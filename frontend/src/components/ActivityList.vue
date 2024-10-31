@@ -72,7 +72,7 @@ export default {
           if (this.selectedLabels.length > 0 && !this.selectedLabels.includes(activity.activity_tags)) {
             return false;
           }
-          if (this.selectedStatuses.length > 0 && !this.selectedStatuses.includes(activity.status)) {
+          if (this.selectedStatuses.length > 0 && !this.selectedStatuses.includes(activity.activity_status)) {
             return false;
           }
           if (this.searchQuery && !activity.activity_name.includes(this.searchQuery)) {
