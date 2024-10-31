@@ -2,8 +2,8 @@
     * @FileDescription: Information 视图组件，展示用户的活动信息 
     * @Author: infinity
     * @Date: 2024-10-23 
-    * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-23
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-10-31
  -->
 
 <template>
@@ -14,6 +14,9 @@
         <h3>我的</h3>
         <ul>
           <li>我的活动</li>
+          <li v-if="isOrganizer">
+            <button @click="navigateToCreateActivity">创建活动</button>
+          </li>
         </ul>
       </div>
       <div class="content">
@@ -21,13 +24,7 @@
           <div class="filter-dropdown">
             <select v-model="selectedStatus" @change="filterByStatus">
               <option value="" disabled selected>选择状态</option>
-              <option value="未参与">未参与</option>
-              <option value="参与中">参与中</option>
-              <option value="已参与">已参与</option>
-              <option value="已报名">已报名</option>
-              <option value="已录取">已录取</option>
-              <option value="未录取">未录取</option>
-              <option value="已取消">已取消</option>
+              <option v-for="status in availableStatuses" :key="status" :value="status">{{ status }}</option>
             </select>
           </div>
           <div class="search-bar">
@@ -49,8 +46,8 @@
         <div class="activity-list">
           <div v-for="activity in activities" :key="activity.id" class="activity-row">
             <ActivityCard :activity="activity" />
-            <span>{{ activity.host }}</span>
-            <span>{{ activity.activity_result }}</span>
+            <span>{{ activity.organizer_name }}</span>
+            <span>{{ activity.activity_status }}</span>
           </div>
         </div>
 
@@ -87,6 +84,16 @@ export default {
       activitiesPerPage: 4,
     }
   },
+  computed: {
+    availableStatuses() {
+      return this.isOrganizer
+        ? ['未开始', '招募中', '已招满', '进行中', '已结束', '已取消']
+        : ['未参与', '参与中', '已参与', '已报名', '已录取', '未录取', '已取消'];
+    },
+    isOrganizer() {
+      return localStorage.getItem('user_type') === 'organizer';
+    },
+  },
   methods: {
     async fetchActivities() {
       const response = await axios.get(`http://127.0.0.1:8000/api/user-activities/`, {
@@ -95,6 +102,7 @@ export default {
           status: this.selectedStatus,
           search: this.searchQuery,
           user_id: localStorage.getItem('username'), // 获取 user_id
+          user_type: localStorage.getItem('user_type'), // 获取 user_type
         },
       });
       this.activities = response.data.results; // 更新活动列表
@@ -111,6 +119,9 @@ export default {
     handlePageChange(page) {
       this.currentPage = page;
       this.fetchActivities();
+    },
+    navigateToCreateActivity() {
+      this.$router.push('/activity/create');
     },
   },
   mounted() {
@@ -169,4 +180,21 @@ export default {
   padding: 10px;
   border-bottom: 1px solid #ddd;
 }
+.activity-row span {
+  flex-basis: 40%;
+  text-align: center;
+}
+
+button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  border: none;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #45a049;
+}
 </style>
+

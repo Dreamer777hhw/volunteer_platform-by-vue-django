@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity
+from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity, OrganizerActivity
 from .serializers import VolunteerSerializer, OrganizerSerializer, ActivitySerializer, ActivityStatusSerializer, ActivityApplicationSerializer, VolunteerActivitySerializer
 # from rest_framework.permissions import IsAuthenticated
 import jwt
@@ -13,7 +13,7 @@ from django.db.models import Count, F, Q
 from django.contrib.auth import update_session_auth_hash
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
-from django.utils.text import slugify
+from django.shortcuts import get_object_or_404
 from datetime import datetime
 # import os
 # from django.conf import settings
@@ -278,6 +278,7 @@ class ActivityListView(APIView):
             })
         return Response(data, status=status.HTTP_200_OK)
 
+
 class RecommendActivityView(APIView):
     def get(self, request, tab, username):
         if tab == 'recommend':
@@ -289,13 +290,14 @@ class RecommendActivityView(APIView):
             # 筛选当前用户最喜爱的活动类型
             user_favorite_tags = VolunteerActivity.objects.filter(student_id=username).values(
                 'activity__activity_tags').annotate(count=Count('activity')).order_by('-count')
+
             # 如果用户有最喜欢的标签，按标签筛选活动
             if user_favorite_tags.exists():
                 for user_favorite_tag in user_favorite_tags:
                     tag = user_favorite_tag['activity__activity_tags']
                     # 从招募中的活动中筛选出包含该标签的活动
-                    tagged_activities = activities.filter(activity_tags=tag).values()[:1]  # 每个标签取最多3个活动
-                    activity_data.extend(tagged_activities)  # 将找到的活动添加到结果列表中
+                    tagged_activities = activities.filter(activity_tags=tag)[:3]  # 每个标签最多取3个活动
+                    activity_data.extend(tagged_activities)  # 将找到的活动添加到结果列表
 
                     # 如果已经找到了3个活动，退出循环
                     if len(activity_data) >= 3:
@@ -303,19 +305,22 @@ class RecommendActivityView(APIView):
 
             # 如果没有找到用户喜欢的活动，则返回所有招募中的活动
             if not activity_data:
-                activity_data = list(activities.values())[:3]  # 限制返回3个活动
+                activity_data = list(activities)[:3]  # 限制返回3个活动
 
-            return Response(list(activity_data)[:3])  # 确保返回的列表最多为3个活动
+            # 使用 ActivitySerializer 进行序列化
+            serializer = ActivitySerializer(activity_data, many=True)
+            return Response(serializer.data)  # 返回序列化后的活动数据
 
         elif tab == 'hot':
             hot_activities = Activity.objects.filter(
                 activitystatus__activity_status='进行中'
             ).annotate(total_clicks=F('activitystatus__total_clicks')).order_by('-total_clicks')[:3]
-            # 只选择需要的字段，并将结果转换为列表
-            activity_data = list(hot_activities.values())[:3]  # 确保最多返回3个活动
-            return Response(activity_data)  # 直接返回活动列表
 
-        return Response({'error': '无效的标签'}, status=400)
+            # 使用 ActivitySerializer 进行序列化
+            serializer = ActivitySerializer(hot_activities, many=True)
+            return Response(serializer.data)  # 返回序列化后的活动数据
+
+        return Response({'error': '无效的标签'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserActivityPagination(PageNumberPagination):
@@ -326,32 +331,54 @@ class UserActivityPagination(PageNumberPagination):
 class UserActivityView(APIView):
     def get(self, request):
         user_id = request.GET.get('user_id')
-        if not user_id:
-            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        user_type = request.GET.get('user_type')  # 假设前端会传递 user_type
+        if not user_id or not user_type:
+            return Response({'error': 'user_id and user_type are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 获取用户参与的活动
-        volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
+        # 根据用户类型获取活动
+        if user_type == 'volunteer':
+            volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
+
+        elif user_type == 'organizer':
+            organizer_activities = OrganizerActivity.objects.filter(organizer_id=user_id)
+
+        else:
+            return Response({'error': 'Invalid user_type'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 处理状态过滤
         status_filter = request.GET.get('status')
         if status_filter:
-            volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
+            if user_type == 'volunteer':
+                volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
+            elif user_type == 'organizer':
+                organizer_activities = organizer_activities.filter(activity_result=status_filter)
 
         # 处理搜索查询
         search_query = request.GET.get('search')
         if search_query:
-            volunteer_activities = volunteer_activities.filter(
-                Q(activity__activity_name__icontains=search_query) |
-                Q(activity__activity_location__icontains=search_query) |
-                Q(activity__organizer__name__icontains=search_query)  # 假设你有一个组织者的名字字段
-            )
+            if user_type == 'volunteer':
+                volunteer_activities = volunteer_activities.filter(
+                    Q(activity__activity_name__icontains=search_query) |
+                    Q(activity__activity_location__icontains=search_query) |
+                    Q(activity__organizer__organizer_name__icontains=search_query)  # 注意这里的连接
+                )
+            elif user_type == 'organizer':
+                organizer_activities = organizer_activities.filter(
+                    Q(activity__activity_name__icontains=search_query) |
+                    Q(activity__activity_location__icontains=search_query)
+                )
 
+        # 分页处理
         paginator = UserActivityPagination()
-        paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
+        if user_type == 'volunteer':
+            paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
+            serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
+        else:
+            paginated_activities = paginator.paginate_queryset(organizer_activities, request)
+            serializer = ActivitySerializer([oa.activity for oa in paginated_activities], many=True)
 
-        # 序列化活动数据
-        serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
 class PasswordChangeView(APIView):
     # permission_classes = [IsAuthenticated]
@@ -455,15 +482,40 @@ class CreateActivityView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterForActivityView(APIView):
-    def post(self, request, activity_id_hash):
+    def post(self, request, activity_id_hash, user_id):
         try:
+            # 获取活动对象
             activity = Activity.objects.get(activity_id=activity_id_hash)
-            # 假设这里进行报名逻辑，比如检查名额、更新数据库等
+
+            # 获取活动状态对象
             activity_status = ActivityStatus.objects.get(activity=activity)
 
+            # 检查名额是否充足
             if activity_status.registered_volunteers < activity_status.accepted_volunteers:
+                # 增加已报名人数
                 activity_status.registered_volunteers += 1
                 activity_status.save()
+
+                # 获取志愿者对象
+                student = Volunteer.objects.get(student_id=user_id)
+
+                # 创建新的报名记录
+                application = ActivityApplication(
+                    student=student,
+                    activity=activity,
+                    application_result='待审核',  # 默认状态
+                    application_date=timezone.now()  # 当前时间
+                )
+                application.save()
+
+                # 创建 VolunteerActivity 记录
+                volunteer_activity = VolunteerActivity(
+                    student=student,
+                    activity=activity,
+                    activity_result='已报名'  # 设置状态为已报名
+                )
+                volunteer_activity.save()
+
                 return Response({'message': '报名成功！'}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': '名额已满！'}, status=status.HTTP_400_BAD_REQUEST)
@@ -471,6 +523,8 @@ class RegisterForActivityView(APIView):
             return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
         except ActivityStatus.DoesNotExist:
             return Response({'error': '活动状态不存在'}, status=status.HTTP_404_NOT_FOUND)
+        except Volunteer.DoesNotExist:
+            return Response({'error': '志愿者不存在'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class UpdateActivityStatusView(APIView):
@@ -513,20 +567,24 @@ class UpdateActivityStatusView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class UpcomingActivitiesView(APIView):
-    def get(self, request):
-        now = timezone.now()
-        # 获取开始时间在未来一周内的活动
-        upcoming_activities = Activity.objects.filter(activity_start_time__gte=now).order_by('activity_start_time')[:5]
+class ActivityRegistrationsView(APIView):
+    def get(self, request, activity_id_hash, user_id):
+        # 获取活动对象
+        activity = get_object_or_404(Activity, activity_id=activity_id_hash)
 
-        # 构建响应数据
-        activities_data = [
+        # 根据 user_id 获取该用户的报名记录
+        registrations = VolunteerActivity.objects.filter(activity=activity, student_id=user_id)
+
+        # 提取用户 ID 和状态
+        registration_data = [
             {
-                'name': activity.activity_name,
-                'start_time': activity.activity_start_time,
-                'link': f'/activity/detail/{activity.activity_id}'  # 假设使用活动 ID 作为链接
+                "student_id": registration.student_id,
+                "activity_result": registration.activity_result
             }
-            for activity in upcoming_activities
+            for registration in registrations
         ]
 
-        return Response(activities_data, status=status.HTTP_200_OK)
+        if not registration_data:
+            return Response({'message': '未找到该用户的报名记录。'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(registration_data, status=status.HTTP_200_OK)

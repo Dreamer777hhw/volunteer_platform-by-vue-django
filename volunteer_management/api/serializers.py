@@ -21,6 +21,9 @@ class OrganizerSerializer(serializers.ModelSerializer):
         }
 
 class ActivitySerializer(serializers.ModelSerializer):
+    organizer_name = serializers.CharField(source='organizer.organizer_name', read_only=True)
+    registered_volunteers = serializers.IntegerField(source='activitystatus.registered_volunteers', read_only=True)
+    activity_status = serializers.CharField(source='activitystatus.activity_status', read_only=True)
     class Meta:
         model = Activity
         fields = '__all__'
