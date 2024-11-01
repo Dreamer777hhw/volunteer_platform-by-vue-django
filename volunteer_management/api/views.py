@@ -588,3 +588,21 @@ class ActivityRegistrationsView(APIView):
             return Response({'message': '未找到该用户的报名记录。'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(registration_data, status=status.HTTP_200_OK)
+
+class UpcomingActivitiesView(APIView):
+    def get(self, request):
+        now = timezone.now()
+        # 获取开始时间在未来一周内的活动
+        upcoming_activities = Activity.objects.filter(activity_start_time__gte=now).order_by('activity_start_time')[:5]
+
+        # 构建响应数据
+        activities_data = [
+            {
+                'name': activity.activity_name,
+                'start_time': activity.activity_start_time,
+                'link': f'/activity/detail/{activity.activity_id}'  # 假设使用活动 ID 作为链接
+            }
+            for activity in upcoming_activities
+        ]
+
+        return Response(activities_data, status=status.HTTP_200_OK)
