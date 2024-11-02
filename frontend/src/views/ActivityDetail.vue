@@ -48,6 +48,9 @@
             <div v-if="isOrganizer">
               <button class="register-button" @click="navigateToReviseActivity">修改活动</button>
             </div>
+            <div v-if="isOrganizer">
+              <button class="register-button" @click="navigateToCheckVolunteer">审核志愿者</button>
+            </div>
           </div>
         </div>
       </div>
@@ -131,6 +134,9 @@ export default {
     },
     navigateToReviseActivity() {
       this.$router.push({ name: 'ReviseActivity', params: { activity_id_hash: this.activity.activity_id } });
+    },
+    navigateToCheckVolunteer() {
+      this.$router.push({ name: 'CheckVolunteer', params: { activity_id_hash: this.activity.activity_id } });
     },
   },
   mounted() {

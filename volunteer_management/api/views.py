@@ -15,7 +15,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import get_object_or_404
 from datetime import datetime
-# import os
+import time
+import os
 # from django.conf import settings
 
 class VolunteerViewSet(viewsets.ModelViewSet):
@@ -439,9 +440,15 @@ class UploadImageView(APIView):
             # 使用活动名称生成安全的文件名
             # safe_activity_name = slugify(activity_name)  # 将活动名称转换为安全的文件名
             # filename = f"{safe_activity_name}.png"  # 使用活动名称作为文件名
-            filename = f"{activity_name}.png"  # 使用活动名称作为文件名
+            timestamp = int(time.time())  # 获取当前时间戳
+            filename = f"{activity_name}_{timestamp}.png"
             # 修改存储路径为frontend/public下
-            storage_location = r'D:\jiaotongdaxue\web_developmet\volunteer_management\frontend\public\activity-images'
+            # storage_location = r'D:\jiaotongdaxue\web_developmet\volunteer_management\frontend\public\activity-images'
+            # fs = FileSystemStorage(location=storage_location)
+            # fs.save(filename, file)  # 保存文件
+            # 修改存储路径为相对路径
+            # storage_location = os.path.join('frontend', 'public', 'activity-images')
+            storage_location = r'../frontend/public/activity-images'
             fs = FileSystemStorage(location=storage_location)
             fs.save(filename, file)  # 保存文件
 
@@ -606,3 +613,81 @@ class UpcomingActivitiesView(APIView):
         ]
 
         return Response(activities_data, status=status.HTTP_200_OK)
+
+class VolunteerApplicationView(APIView):
+    def get(self, request, activity_id):
+        try:
+            # 获取当前活动
+            activity = Activity.objects.get(activity_id=activity_id)
+
+            # 获取与活动相关的申请
+            applications = ActivityApplication.objects.filter(activity=activity)
+
+            # 序列化申请数据
+            application_serializer = ActivityApplicationSerializer(applications, many=True)
+
+            # 序列化活动数据
+            activity_serializer = ActivitySerializer(activity)
+
+            # 获取申请中志愿者的相关信息
+            volunteer_ids = [app.student.student_id for app in applications]
+            volunteers = Volunteer.objects.filter(student_id__in=volunteer_ids)
+            volunteer_serializer = VolunteerSerializer(volunteers, many=True)
+
+            # 返回数据
+            return Response({
+                'activity_name': activity_serializer.data['activity_name'],
+                'applications': application_serializer.data,
+                'volunteers': volunteer_serializer.data,
+            }, status=status.HTTP_200_OK)
+
+        except Activity.DoesNotExist:
+            return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ApproveVolunteerApplicationView(APIView):
+    def patch(self, request, application_id):
+        try:
+            # 获取申请记录
+            application = ActivityApplication.objects.get(application_id=application_id)
+            # 更新申请结果为 "已通过"
+            application.application_result = '已通过'
+            application.save()
+
+            # 创建或更新 VolunteerActivity 记录
+            VolunteerActivity.objects.update_or_create(
+                student=application.student,
+                activity=application.activity,
+                defaults={'activity_result': '已录取'}
+            )
+
+            return Response({'message': '申请已同意'}, status=status.HTTP_200_OK)
+        except ActivityApplication.DoesNotExist:
+            return Response({'error': '申请记录不存在'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class RejectVolunteerApplicationView(APIView):
+    def patch(self, request, application_id):
+        try:
+            # 获取申请记录
+            application = ActivityApplication.objects.get(application_id=application_id)
+
+            # 更新申请结果为 "未通过"
+            application.application_result = '未通过'
+            application.save()
+
+            # 创建或更新 VolunteerActivity 记录，标记为未录取
+            VolunteerActivity.objects.update_or_create(
+                student=application.student,
+                activity=application.activity,
+                defaults={'activity_result': '未录取'}
+            )
+
+            return Response({'message': '申请已拒绝'}, status=status.HTTP_200_OK)
+        except ActivityApplication.DoesNotExist:
+            return Response({'error': '申请记录不存在'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
