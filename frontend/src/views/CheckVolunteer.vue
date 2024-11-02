@@ -2,7 +2,7 @@
     * @FileDescription: 检查志愿者申请页面，用户可以在此页面查看和管理志愿者申请 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: infinity 
+    * @LastEditors: dreamer777hhw
     * @LastEditTime: 2024-10-24
  -->
 
@@ -14,7 +14,7 @@
         <h2 class="check-volunteer-title">检查志愿者申请</h2>
         <div class="activity-name">
           <label>活动名称：</label>
-          <span>{{ activityName }}</span>
+          <span>{{ activity_name }}</span>
         </div>
         <div class="volunteer-list-header">
           <span>姓名</span>
@@ -23,20 +23,30 @@
           <span>学院</span>
           <span>邮箱</span>
           <span>手机号</span>
-          <span>操作</span>
+          <span>状态</span>
         </div>
         <div class="volunteer-list">
-          <div v-for="volunteer in volunteers" :key="volunteer.id" class="volunteer-row">
-            <span>{{ volunteer.name }}</span>
-            <span>{{ volunteer.studentId }}</span>
-            <span>{{ volunteer.major }}</span>
-            <span>{{ volunteer.college }}</span>
-            <span>{{ volunteer.email }}</span>
-            <span>{{ volunteer.phone }}</span>
-            <div class="action-buttons">
-              <button @click="approveVolunteer(volunteer.id)">同意</button>
-              <button @click="rejectVolunteer(volunteer.id)">拒绝</button>
-            </div>
+          <div v-for="(application, index) in applications" :key="application.application_id" class="volunteer-row">
+            <span>{{ volunteers[index].name }}</span>
+            <span>{{ volunteers[index].student_id }}</span>
+            <span>{{ volunteers[index].major }}</span>
+            <span>{{ volunteers[index].school }}</span>
+            <span>{{ volunteers[index].email }}</span>
+            <span>{{ volunteers[index].phone }}</span>
+            <span>
+              <template v-if="application.application_result === '已通过'">
+                已通过
+              </template>
+              <template v-else-if="application.application_result === '未通过'">
+                未通过
+              </template>
+              <template v-else>
+                <div class="action-buttons">
+                  <button @click="approveVolunteer(application.application_id)">同意</button>
+                  <button @click="rejectVolunteer(application.application_id)">拒绝</button>
+                </div>
+              </template>
+            </span>
           </div>
         </div>
         <div class="bulk-action-buttons">
@@ -50,6 +60,7 @@
 
 <script>
 import NavBar from '@/components/NavBar.vue';
+import axios from 'axios';
 
 export default {
   name: 'CheckVolunteerView',
@@ -58,57 +69,62 @@ export default {
   },
   data() {
     return {
-      activityId: 'fixed_hash_value', 
-      activityName: '示例活动名称',
-      volunteers: [
-        { id: 1, name: '张三', studentId: '20210001', major: '计算机科学', college: '信息学院', email: 'zhangsan@example.com', phone: '12345678901' },
-        { id: 2, name: '李四', studentId: '20210002', major: '软件工程', college: '信息学院', email: 'lisi@example.com', phone: '12345678902' },
-        { id: 3, name: '王五', studentId: '20210003', major: '网络工程', college: '信息学院', email: 'wangwu@example.com', phone: '12345678903' },
-        // 其他志愿者数据
-      ],
+      activity_id: this.$route.params.activity_id_hash,
+      activityName: '',
+      volunteers: [],
+      applications: [],
     };
   },
+  mounted() {
+    this.fetchVolunteerApplications();
+  },
   methods: {
-    /** 
-     * @description 同意志愿者申请 
-     * @param {number} id - 志愿者ID 
-     * @return {void}
-     */
-    approveVolunteer(id) {
-      // TODO: 同意志愿者申请逻辑
-      console.log(`同意志愿者申请: ${id}`);
+    fetchVolunteerApplications() {
+      axios.get(`http://127.0.0.1:8000/api/applications/${this.activity_id}/`)
+        .then(response => {
+          this.activityName = response.data.activity_name; // 获取活动名称
+          this.volunteers = response.data.volunteers; // 获取志愿者信息
+          this.applications = response.data.applications; // 获取申请记录
+        })
+        .catch(error => {
+          console.error('获取申请记录失败:', error);
+        });
     },
-    /** 
-     * @description 拒绝志愿者申请 
-     * @param {number} id - 志愿者ID 
-     * @return {void}
-     */
-    rejectVolunteer(id) {
-      // TODO: 拒绝志愿者申请逻辑
-      console.log(`拒绝志愿者申请: ${id}`);
+    approveVolunteer(studentId) {
+      axios.patch(`http://127.0.0.1:8000/api/applications/approve/${studentId}/`, { application_result: '已通过' })
+        .then(response => {
+          this.fetchVolunteerApplications(); // 重新获取申请列表
+          console.log('申请已同意:', response.data.message);
+        })
+        .catch(error => {
+          console.error('同意申请失败:', error);
+        });
     },
-    /** 
-     * @description 一键同意所有志愿者申请 
-     * @return {void}
-     */
+    rejectVolunteer(studentId) {
+      axios.patch(`http://127.0.0.1:8000/api/applications/reject/${studentId}/`, { application_result: '未通过' })
+        .then(response => {
+          this.fetchVolunteerApplications(); // 重新获取申请列表
+          console.log('申请已拒绝:', response.data.message);
+        })
+        .catch(error => {
+          console.error('拒绝申请失败:', error);
+        });
+    },
     approveAll() {
-      // TODO: 一键同意所有志愿者申请逻辑
+      // 一键同意所有志愿者申请逻辑
       console.log('一键同意所有志愿者申请');
+      // 需要实现一键同意的后端逻辑
     },
-    /** 
-     * @description 一键拒绝所有志愿者申请 
-     * @return {void}
-     */
     rejectAll() {
-      // TODO: 一键拒绝所有志愿者申请逻辑
+      // 一键拒绝所有志愿者申请逻辑
       console.log('一键拒绝所有志愿者申请');
+      // 需要实现一键拒绝的后端逻辑
     }
   }
 };
 </script>
 
 <style scoped>
-/* TODO 修改样式 */
 .check-volunteer-container {
   background-color: #f0f2f5;
   display: flex;
