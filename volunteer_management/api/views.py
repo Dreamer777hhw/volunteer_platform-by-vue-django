@@ -743,3 +743,14 @@ class CancelRegistrationView(APIView):
             return Response({"error": "未找到报名记录"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateUserInfoView(APIView):
+    def post(self, request):
+        user = Volunteer.objects.get(student_id=request.data.get('student_id'))
+
+        # 更新用户信息
+        serializer = VolunteerSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': '用户信息更新成功'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
