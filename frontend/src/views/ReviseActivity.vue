@@ -37,6 +37,10 @@
               </select>
             </div>
             <div class="input-field">
+              <label>当前活动图片：</label>
+              <img v-if="activityImagePath" :src="activityImagePath" alt="活动图片" class="activity-image" />
+            </div>
+            <div class="input-field">
               <label>上传图片：</label>
               <input
                 type="file"
@@ -155,6 +159,7 @@
 
 <script>
 import NavBar from '@/components/NavBar.vue';
+import axios from 'axios';
 
 export default {
   name: 'ReviseActivityView',
@@ -163,23 +168,24 @@ export default {
   },
   data() {
     return {
-      activityId: 'fixed_hash_value', 
-      activityName: '旋律欣赏活动',
-      activityDescription: '欣赏旋律，感受悦动',
-      activityTag: '文体活动',
-      applicationRequirements: '热爱音乐的非艺术学院音乐相关专业学生',
-      applicationStartTime: '2024-10-01T09:00', 
-      applicationEndTime: '2024-10-10T18:00', 
-      activityStartTime: '2024-10-15T09:00', 
-      activityEndTime: '2024-10-15T18:00', 
-      volunteerHours: 8, 
-      activityLocation: '音乐厅',
-      contactName: '张三',
-      contactPhone: '1234567890',
-      acceptedVolunteers: 50, 
-      laborHours: 4, 
-      sutuo: '素拓活动',
-      notes: '请准时参加活动',
+      activityId: '',
+      activityName: '',
+      activityDescription: '',
+      activityTag: '',
+      applicationRequirements: '',
+      applicationStartTime: '',
+      applicationEndTime: '',
+      activityStartTime: '',
+      activityEndTime: '',
+      volunteerHours: '',
+      activityLocation: '',
+      contactName: '',
+      contactPhone: '',
+      acceptedVolunteers: '',
+      laborHours: '',
+      sutuo: '',
+      notes: '',
+      activityImagePath: '',
       activityTags: {
         '讲坛讲座': '讲坛讲座',
         '志愿公益': '志愿公益',
@@ -192,56 +198,96 @@ export default {
     };
   },
   created() {
-    // 写死一个固定的哈希值，方便测试
-    this.activityId = 'fixed_hash_value';
+    this.activityId = this.$route.params.activity_id_hash; // 从路由获取活动ID
     this.fetchActivityDetails();
   },
   methods: {
-    /** 
-     * @description 获取活动详情 
-     * @return {void}
-     */
-    fetchActivityDetails() {
-      // TODO: 根据 activityId 获取活动详情
-      // 例如：axios.get(`/api/activities/${this.activityId}`).then(response => {
-      //   const activity = response.data;
-      //   this.activityName = activity.name;
-      //   this.activityDescription = activity.description;
-      //   this.activityTag = activity.tag;
-      //   this.applicationRequirements = activity.requirements;
-      //   this.applicationStartTime = activity.application_start_time;
-      //   this.applicationEndTime = activity.application_end_time;
-      //   this.activityStartTime = activity.start_time;
-      //   this.activityEndTime = activity.end_time;
-      //   this.volunteerHours = activity.volunteer_hours;
-      //   this.activityLocation = activity.location;
-      //   this.contactName = activity.contact_name;
-      //   this.contactPhone = activity.contact_phone;
-      //   this.acceptedVolunteers = activity.accepted_volunteers;
-      //   this.laborHours = activity.labor_hours;
-      //   this.sutuo = activity.sutuo;
-      //   this.notes = activity.notes;
-      // });
+    formatDateTime(dateTime) {
+      if (!dateTime) return '';
+      const date = new Date(dateTime);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
     },
-    /** 
-     * @description 上传图片 
-     * @param {Event} event - 文件选择事件 
-     * @return {void}
-     */
+    async fetchActivityDetails() {
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/api/reviseactivity/${this.activityId}/`);
+        const activity = response.data;
+        // 将活动详情填充到数据模型
+        this.activityName = activity.activity_name;
+        this.activityDescription = activity.activity_description;
+        this.activityTag = activity.activity_tags;
+        this.applicationRequirements = activity.application_requirements;
+        this.applicationStartTime = this.formatDateTime(activity.application_start_time);
+        this.applicationEndTime = this.formatDateTime(activity.application_end_time);
+        this.activityStartTime = this.formatDateTime(activity.activity_start_time);
+        this.activityEndTime = this.formatDateTime(activity.activity_end_time);
+        this.volunteerHours = activity.estimated_volunteer_hours;
+        this.activityLocation = activity.activity_location;
+        this.contactName = activity.contact_name;
+        this.contactPhone = activity.contact_phone;
+        this.acceptedVolunteers = activity.accepted_volunteers;
+        this.laborHours = activity.labor_hours;
+        this.sutuo = activity.sutuo;
+        this.notes = activity.notes;
+        this.activityImagePath = activity.activity_image_path;
+      } catch (error) {
+        console.error("获取活动详情失败:", error);
+      }
+    },
     uploadPic(event) {
       const file = event.target.files[0];
-      const formData = new FormData();
-      formData.append('file', file);
-      // TODO 上传图片逻辑
-      // 例如：axios.post('/upload', formData)
+      if (file) {
+        const formData = new FormData();
+        formData.append('activity_name', this.activityName); // 将活动名称添加到表单数据中
+        formData.append('file', file); // 将文件添加到表单数据中
+
+        axios.post('http://127.0.0.1:8000/api/upload/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        })
+        .then(response => {
+          this.activityImagePath = response.data.url; // 更新活动图片路径
+        })
+        .catch(error => {
+          console.error('上传图片失败:', error);
+          alert('上传图片失败，请稍后再试！');
+        });
+      }
     },
-    /** 
-     * @description 修改活动 
-     * @return {void}
-     */
-    reviseActivity() {
-      // TODO 修改活动逻辑
-      // 例如：axios.put(`/api/activities/${this.activityId}`, { ... })
+    async reviseActivity() {
+      try {
+        const updatedActivity = {
+          activity_name: this.activityName,
+          activity_description: this.activityDescription,
+          activity_tags: this.activityTag,
+          application_requirements: this.applicationRequirements,
+          application_start_time: this.applicationStartTime,
+          application_end_time: this.applicationEndTime,
+          activity_start_time: this.activityStartTime,
+          activity_end_time: this.activityEndTime,
+          estimated_volunteer_hours: this.volunteerHours,
+          activity_location: this.activityLocation,
+          contact_name: this.contactName,
+          contact_phone: this.contactPhone,
+          accepted_volunteers: this.acceptedVolunteers,
+          labor_hours: this.laborHours,
+          sutuo: this.sutuo,
+          notes: this.notes,
+        };
+        const response = await axios.put(`http://127.0.0.1:8000/api/reviseactivity/${this.activityId}/`, updatedActivity);
+        alert('活动修改成功！');
+        this.$router.push(`/activity/detail/${this.activityId}`);
+        console.log('修改活动成功:', response.data);
+
+      } catch (error) {
+        console.error("修改活动失败:", error);
+        alert('修改活动失败，请稍后再试！');
+      }
     }
   }
 };
@@ -303,4 +349,12 @@ export default {
   padding: 0.5rem 1rem;
   cursor: pointer;
 }
+
+.activity-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  margin-top: 0.5rem;
+}
+
 </style>
