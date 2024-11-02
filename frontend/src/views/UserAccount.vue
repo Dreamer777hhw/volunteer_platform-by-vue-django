@@ -119,7 +119,16 @@ export default {
      * @return {void}
      */
     goToModifyInfo() {
-      this.$router.push('/modifyinfo'); // 跳转到修改信息页面
+      this.$router.push({
+        path: '/modifyinfo',
+        query: {
+          name: this.name,
+          school: this.school,
+          major: this.major,
+          email: this.email,
+          phone: this.phone,
+        }
+      });
     },
     /**
      * @description 跳转到修改密码页面
