@@ -754,3 +754,23 @@ class UpdateUserInfoView(APIView):
             serializer.save()
             return Response({'message': '用户信息更新成功'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ReviseActivityDetailView(APIView):
+    def get(self, request, activity_id_hash):
+        try:
+            activity = Activity.objects.get(activity_id=activity_id_hash)
+            serializer = ActivitySerializer(activity)
+            return Response(serializer.data)
+        except Activity.DoesNotExist:
+            return Response({"error": "活动未找到"}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, activity_id_hash, *args, **kwargs):
+        try:
+            activity = Activity.objects.get(activity_id=activity_id_hash)
+            serializer = ActivitySerializer(activity, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Activity.DoesNotExist:
+            return Response({"error": "活动未找到"}, status=status.HTTP_404_NOT_FOUND)
