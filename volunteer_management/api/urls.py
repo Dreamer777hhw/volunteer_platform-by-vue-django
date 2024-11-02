@@ -9,7 +9,8 @@ from .views import (VolunteerViewSet, OrganizerViewSet, ActivityViewSet,
                     UserActivityView, PasswordChangeView, CreateActivityView,
                     UploadImageView, RegisterForActivityView, UpdateActivityStatusView,
                     ActivityRegistrationsView, UpcomingActivitiesView, VolunteerApplicationView,
-                    ApproveVolunteerApplicationView, RejectVolunteerApplicationView)
+                    ApproveVolunteerApplicationView, RejectVolunteerApplicationView,
+                    CancelRegistrationView)
 
 router = DefaultRouter()
 router.register(r'volunteers', VolunteerViewSet)
@@ -40,5 +41,6 @@ urlpatterns = [
     path('applications/<int:activity_id>/', VolunteerApplicationView.as_view(), name='volunteer-applications'),
     path('applications/approve/<int:application_id>/', ApproveVolunteerApplicationView.as_view(), name='approve-volunteer-application'),
     path('applications/reject/<int:application_id>/', RejectVolunteerApplicationView.as_view(), name='reject-volunteer-application'),
+    path('activity/cancel/<str:activity_id_hash>/<str:user_id>/', CancelRegistrationView.as_view()),
 ]
 

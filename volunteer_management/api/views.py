@@ -515,13 +515,16 @@ class RegisterForActivityView(APIView):
                 )
                 application.save()
 
-                # 创建 VolunteerActivity 记录
-                volunteer_activity = VolunteerActivity(
+                # 获取或更新志愿者活动记录
+                volunteer_activity, created = VolunteerActivity.objects.get_or_create(
                     student=student,
                     activity=activity,
-                    activity_result='已报名'  # 设置状态为已报名
+                    defaults={'activity_result': '已报名'}  # 设置状态为已报名
                 )
-                volunteer_activity.save()
+                if not created:
+                    # 如果记录已存在，更新状态为已报名
+                    volunteer_activity.activity_result = '已报名'
+                    volunteer_activity.save()
 
                 return Response({'message': '报名成功！'}, status=status.HTTP_200_OK)
             else:
@@ -565,8 +568,18 @@ class UpdateActivityStatusView(APIView):
                 else:
                     activity_status.activity_status = '已取消'  # 其他情况，视为已取消
 
-                # 保存更新
+                # 保存活动状态更新
                 activity_status.save()
+
+                # 更新志愿者活动状态
+                volunteer_activities = VolunteerActivity.objects.filter(activity=activity)
+                for volunteer_activity in volunteer_activities:
+                    if now >= activity_start_time and now < activity_end_time and volunteer_activity.activity_result == '已录取':
+                        volunteer_activity.activity_result = '参与中'
+                        volunteer_activity.save()
+                    elif now >= activity_end_time and volunteer_activity.activity_result == '参与中':
+                        volunteer_activity.activity_result = '已参与'
+                        volunteer_activity.save()
 
             return Response({'message': '活动状态更新成功'}, status=status.HTTP_200_OK)
 
@@ -691,3 +704,42 @@ class RejectVolunteerApplicationView(APIView):
             return Response({'error': '申请记录不存在'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class CancelRegistrationView(APIView):
+
+    def post(self, request, activity_id_hash, user_id):
+        try:
+            # 获取活动和用户
+            activity = Activity.objects.get(activity_id=activity_id_hash)
+            volunteer = Volunteer.objects.get(student_id=user_id)  # 使用正确的字段名
+
+            # 查找并删除报名记录
+            application = ActivityApplication.objects.get(activity=activity, student=volunteer)
+            application.delete()  # 删除报名记录
+
+            volunteer_activity = VolunteerActivity.objects.get(student=volunteer, activity=activity)
+            if volunteer_activity:
+                # 如果记录已存在，更新状态为已取消
+                volunteer_activity.activity_result = '已取消'
+                volunteer_activity.save()
+            else:
+                # 如果记录不存在，创建新的志愿者活动记录
+                VolunteerActivity.objects.create(student=volunteer, activity=activity, activity_result='已取消')
+
+            # 更新活动的已注册志愿者人数
+            activityStatus = ActivityStatus.objects.get(activity=activity)
+            activityStatus.registered_volunteers -= 1
+            activityStatus.save()
+
+            return Response({"message": "取消报名成功"}, status=status.HTTP_200_OK)
+
+        except Activity.DoesNotExist:
+            return Response({"error": "活动不存在"}, status=status.HTTP_404_NOT_FOUND)
+        except Volunteer.DoesNotExist:
+            return Response({"error": "用户不存在"}, status=status.HTTP_404_NOT_FOUND)
+        except ActivityApplication.DoesNotExist:
+            return Response({"error": "未找到报名记录"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

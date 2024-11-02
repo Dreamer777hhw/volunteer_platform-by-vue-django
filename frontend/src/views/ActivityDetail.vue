@@ -3,7 +3,7 @@
     * @Author: infinity
     * @Date: 2024-10-24 
     * @LastEditors: dreamer777hhw
-    * @LastEditTime: 2024-10-31
+    * @LastEditTime: 2024-11-02
  -->
 
 <template>
@@ -44,6 +44,9 @@
               <button class="register-button" :disabled="isFull || hasRegistered" @click="registerForActivity">
                 {{ isFull ? '报名已满' : hasRegistered ? '已报名' : '报名' }}
               </button>
+              <button v-if="hasRegistered" class="register-button" @click="cancelRegistration">
+                取消报名
+              </button>
             </div>
             <div v-if="isOrganizer">
               <button class="register-button" @click="navigateToReviseActivity">修改活动</button>
@@ -79,7 +82,7 @@ export default {
   data() {
     return {
       activity: {},
-      hasRegistered: false, // 新增变量来判断用户是否已报名
+      hasRegistered: false,
     };
   },
   computed: {
@@ -101,15 +104,14 @@ export default {
   },
   methods: {
     async fetchActivityDetail() {
-      const activityIdHash = this.$route.params.activity_id_hash; // 从路由参数中获取活动 ID
+      const activityIdHash = this.$route.params.activity_id_hash;
       try {
         const response = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/`);
         this.activity = response.data;
 
-        // 检查用户是否已报名
-        const userId = localStorage.getItem('username'); // 假设用户 ID 存储在 localStorage 中
+        const userId = localStorage.getItem('username');
         const registrationsResponse = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/registrations/${userId}/`);
-        if (registrationsResponse.data.length > 0) {
+        if (registrationsResponse.data.some(data => data.activity_result === '已报名')) {
           this.hasRegistered = true;
         }
       } catch (error) {
@@ -117,18 +119,35 @@ export default {
       }
     },
     async registerForActivity() {
-      const activityIdHash = this.$route.params.activity_id_hash; // 获取活动 ID
+      const activityIdHash = this.$route.params.activity_id_hash;
       try {
         const response = await axios.post(`http://127.0.0.1:8000/api/activity/register/${activityIdHash}/${localStorage.getItem('username')}/`);
-        alert(response.data.message); // 显示成功消息
-        this.hasRegistered = true; // 更新状态为已报名
-        this.fetchActivityDetail(); // 重新获取活动详情以更新数据
+        alert(response.data.message);
+        this.hasRegistered = true;
+        this.fetchActivityDetail();
       } catch (error) {
         if (error.response) {
-          alert(error.response.data.error); // 显示错误消息
+          alert(error.response.data.error);
         } else {
           alert('报名失败，请稍后再试！');
           console.error("报名失败:", error);
+        }
+      }
+    },
+    async cancelRegistration() {
+      const activityIdHash = this.$route.params.activity_id_hash;
+      try {
+        const userId = localStorage.getItem('username');
+        const response = await axios.post(`http://127.0.0.1:8000/api/activity/cancel/${activityIdHash}/${userId}/`);
+        alert(response.data.message);
+        this.hasRegistered = false; // 更新状态为未报名
+        this.fetchActivityDetail(); // 重新获取活动详情以更新数据
+      } catch (error) {
+        if (error.response) {
+          alert(error.response.data.error);
+        } else {
+          alert('取消报名失败，请稍后再试！');
+          console.error("取消报名失败:", error);
         }
       }
     },
@@ -242,3 +261,4 @@ export default {
   color: #333;
 }
 </style>
+
