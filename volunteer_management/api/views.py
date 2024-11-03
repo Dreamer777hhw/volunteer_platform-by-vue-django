@@ -14,6 +14,7 @@ from django.contrib.auth import update_session_auth_hash
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_date
 from datetime import datetime
 import time
 import os
@@ -774,3 +775,33 @@ class ReviseActivityDetailView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Activity.DoesNotExist:
             return Response({"error": "活动未找到"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CalendarView(APIView):
+    def get(self, request):
+        # 获取日期范围参数
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+
+        # 验证日期范围参数
+        if not start_date or not end_date:
+            return Response({"error": "请提供 start_date 和 end_date 参数"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # 将日期字符串转换为日期对象
+            start_date = parse_date(start_date)
+            end_date = parse_date(end_date)
+            if start_date is None or end_date is None:
+                raise ValueError("日期格式不正确")
+        except ValueError:
+            return Response({"error": "日期格式不正确，请使用 YYYY-MM-DD 格式"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 查询在指定日期范围内的所有活动
+        activities = Activity.objects.filter(
+            Q(activity_start_time__gte=start_date) & Q(activity_end_time__lte=end_date)
+        )
+
+        # 序列化活动数据
+        serializer = ActivitySerializer(activities, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

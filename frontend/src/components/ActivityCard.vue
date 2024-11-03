@@ -71,6 +71,7 @@ export default {
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s;
+  flex-direction: column;
 }
 
 .activity-card:hover {
@@ -79,7 +80,7 @@ export default {
 
 .activity-image {
   width: 40%; 
-  height: 100%; 
+  height: auto;
   object-fit: cover;
 }
 
