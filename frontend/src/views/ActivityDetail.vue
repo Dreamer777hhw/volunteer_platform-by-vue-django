@@ -21,29 +21,28 @@
               <p v-if="activity.contact_name">负责人姓名: {{ activity.contact_name }}</p>
               <p v-if="activity.contact_phone">负责人手机: {{ activity.contact_phone }}</p>
               <p v-if="activity.activity_tags">活动类型: {{ activity.activity_tags }}</p>
-              <p v-if="activity.accepted_volunteers !== undefined">
-                总录取人数: {{ activity.accepted_volunteers }}
-              </p>
-              <p v-if="activity.registered_volunteers !== undefined">
-                已录取人数: {{ activity.registered_volunteers }}
-              </p>
+              <p v-if="activity.accepted_volunteers !== undefined">总录取人数: {{ activity.accepted_volunteers }}</p>
+              <p v-if="activity.registered_volunteers !== undefined">已录取人数: {{ activity.registered_volunteers }}</p>
               <p v-if="activity.estimated_volunteer_hours">劳动时长: {{ activity.estimated_volunteer_hours }}</p>
               <p v-if="registrationPeriod">报名时间: {{ formatDateTime(activity.application_start_time) }} - {{ formatDateTime(activity.application_end_time) }}</p>
-              <p v-if="activity.activity_location" class="activity-location">
-                活动地点: {{ activity.activity_location }}
-              </p>
+              <p v-if="activity.activity_location" class="activity-location">活动地点: {{ activity.activity_location }}</p>
+              <p v-if="activity.sutuo">素拓: {{ activity.sutuo }}</p>
+              <p v-if="activity.application_requirements">报名要求: {{ activity.application_requirements }}</p>
+              <p>总点击数: {{ activity.total_clicks }}</p>
+
               <div v-if="isVolunteer">
-                <button class="register-button" :disabled="isFull || hasRegistered" @click="registerForActivity">
+                <p v-if="applicationStatus === '已通过'" class="status-approved">申请已通过</p>
+                <p v-if="applicationStatus === '未通过'" class="status-denied">申请未通过</p>
+                <button v-else class="register-button" :disabled="isFull || hasRegistered" @click="registerForActivity">
                   {{ isFull ? '报名已满' : hasRegistered ? '已报名' : '报名' }}
                 </button>
                 <button v-if="hasRegistered" class="register-button" @click="cancelRegistration">
                   取消报名
                 </button>
               </div>
-              <div v-if="isOrganizer">
+
+              <div v-if="isOrganizer" class="organizer-buttons">
                 <button class="register-button" @click="navigateToReviseActivity">修改活动</button>
-              </div>
-              <div v-if="isOrganizer">
                 <button class="register-button" @click="navigateToCheckVolunteer">审核志愿者</button>
               </div>
             </div>
@@ -76,57 +75,47 @@ export default {
     return {
       activity: {},
       hasRegistered: false,
+      applicationStatus: null, // 新增状态
     };
   },
   computed: {
-    /**
-     * @description 判断活动是否已满员
-     * @return {boolean} 返回活动是否已满员
-     */
     isFull() {
       return this.activity.accepted_volunteers <= this.activity.registered_volunteers;
     },
-    /**
-     * @description 获取报名时间段
-     * @return {string} 返回报名时间段
-     */
     registrationPeriod() {
       return `${this.activity.application_start_time} ~ ${this.activity.application_end_time}`;
     },
-    /**
-     * @description 判断当前用户是否为组织者
-     * @return {boolean} 返回当前用户是否为组织者
-     */
     isOrganizer() {
       return localStorage.getItem('user_type') === 'organizer';
     },
-    /**
-     * @description 判断当前用户是否为志愿者
-     * @return {boolean} 返回当前用户是否为志愿者
-     */
     isVolunteer() {
       return localStorage.getItem('user_type') === 'volunteer';
     },
   },
   methods: {
-    /**
-     * @description 获取活动详情
-     * @return {void}
-     */
     async fetchActivityDetail() {
-      const activityIdHash = this.$route.params.activity_id_hash;
-      try {
-        const response = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/`);
-        this.activity = response.data;
+        const activityIdHash = this.$route.params.activity_id_hash;
+        try {
+            const response = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/`);
+            this.activity = response.data;
 
-        const userId = localStorage.getItem('username');
-        const registrationsResponse = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/registrations/${userId}/`);
-        if (registrationsResponse.data.some(data => data.activity_result === '已报名')) {
-          this.hasRegistered = true;
+            // 更新点击数
+            await axios.post(`http://127.0.0.1:8000/api/activity/click/${this.activity.activity_id}/`);
+
+            const userId = localStorage.getItem('username');
+            const registrationsResponse = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/registrations/${userId}/`);
+            if (registrationsResponse.data.some(data => data.activity_result === '已报名')) {
+                this.hasRegistered = true;
+            }
+
+            // 获取申请状态
+            const application = registrationsResponse.data.find(data => data.activity_result);
+            if (application) {
+                this.applicationStatus = application.application_result;
+            }
+        } catch (error) {
+            console.error("获取活动详情失败:", error);
         }
-      } catch (error) {
-        console.error("获取活动详情失败:", error);
-      }
     },
     /**
      * @description 报名参加活动
@@ -310,4 +299,41 @@ export default {
   font-size: 1rem;
   color: #333;
 }
+
+.organizer-buttons {
+  display: flex;
+  gap: 1rem; /* 按钮之间的间隔 */
+  margin-top: 1rem; /* 上方间距 */
+}
+
+.register-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  width: 120px; /* 设置按钮宽度 */
+  transition: background-color 0.3s; /* 添加过渡效果 */
+}
+
+.register-button:hover {
+  background-color: #0056b3; /* 悬停时的背景色 */
+}
+
+.register-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.status-approved {
+  color: green;
+  font-weight: bold;
+}
+
+.status-denied {
+  color: red;
+  font-weight: bold;
+}
+
 </style>

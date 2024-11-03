@@ -595,12 +595,13 @@ class ActivityRegistrationsView(APIView):
 
         # 根据 user_id 获取该用户的报名记录
         registrations = VolunteerActivity.objects.filter(activity=activity, student_id=user_id)
-
+        activityapplication = ActivityApplication.objects.filter(activity=activity, student_id=user_id)
         # 提取用户 ID 和状态
         registration_data = [
             {
                 "student_id": registration.student_id,
-                "activity_result": registration.activity_result
+                "activity_result": registration.activity_result,
+                "application_result": activityapplication.first().application_result
             }
             for registration in registrations
         ]
@@ -805,3 +806,14 @@ class CalendarView(APIView):
         # 序列化活动数据
         serializer = ActivitySerializer(activities, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class ActivityClickView(APIView):
+    def post(self, request, activity_id):
+        try:
+            activity_status = ActivityStatus.objects.get(activity_id=activity_id)
+            activity_status.total_clicks += 1  # 增加总点击数
+            activity_status.clicks_in_1h += 1  # 增加1小时内点击数
+            activity_status.save()
+            return Response({'message': '点击数已更新'}, status=status.HTTP_200_OK)
+        except ActivityStatus.DoesNotExist:
+            return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
