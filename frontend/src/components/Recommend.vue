@@ -2,8 +2,8 @@
     * @FileDescription: 推荐活动组件，包含猜你喜欢和热门活动两个标签页，以及活动卡片列表
     * @Author: infinity 
     * @Date: 2024-10-31 
-    * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-31 
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-11-02
  -->
 
 <template>
@@ -17,23 +17,34 @@
           <button :class="{'active': currentTab === 'hot'}" @click="fetchActivities('hot')">
             <i class="icon-hot"></i>热门活动
           </button>
+          <button :class="{'active': currentTab === 'calendar'}" @click="currentTab = 'calendar'">
+            <i class="icon-calendar"></i>活动日历
+          </button>
         </div>
       </div>
 
-      <!-- 活动卡片列表 -->
-      <ActivityCardRow :activities="filteredActivities" />
+      <!-- 根据当前标签页显示不同的内容 -->
+      <div v-if="currentTab === 'calendar'" class="calendar-tab">
+        <CalendarComponent />
+      </div>
+      <div v-else>
+        <!-- 活动卡片列表，适用于“猜你喜欢”和“热门活动” -->
+        <ActivityCardRow :activities="filteredActivities" />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import ActivityCardRow from '@/components/ActivityCardRow.vue';
+import CalendarComponent from '@/components/CalendarComponent.vue';
 import axios from 'axios';
 
 export default {
   name: 'RecommendComponent',
   components: {
     ActivityCardRow,
+    CalendarComponent,
   },
   data() {
     return {
@@ -47,7 +58,7 @@ export default {
      * @return {Array} 返回获取到的活动数据
      */
     filteredActivities() {
-      return this.activities; // 返回获取到的活动数据
+      return this.activities;
     },
   },
   methods: {
@@ -57,12 +68,13 @@ export default {
      * @return {void}
      */
     async fetchActivities(tab) {
+      if (tab === 'calendar') return; // 如果是“活动日历”标签页，不请求活动数据
+
       try {
         this.currentTab = tab; // 更新当前标签
-        const username = localStorage.getItem('username'); // 从 localStorage 获取用户名
-        const response = await axios.get(`http://127.0.0.1:8000/api/recommend/${tab}/${username}`); // 将用户名添加到请求中
-        this.activities = response.data; // 更新活动数据
-        console.log('当前用户:', username); // 打印用户名，你可以根据需求使用
+        const username = localStorage.getItem('username');
+        const response = await axios.get(`http://127.0.0.1:8000/api/recommend/${tab}/${username}`);
+        this.activities = response.data;
       } catch (error) {
         console.error('获取活动失败:', error);
       }
@@ -77,13 +89,13 @@ export default {
 <style scoped>
 .buttons {
   display: flex;
-  gap: 20px; 
+  gap: 20px;
 }
 
 button {
-  font-size: 24px; 
-  border: none; 
-  background: none; 
+  font-size: 24px;
+  border: none;
+  background: none;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -91,10 +103,14 @@ button {
 }
 
 button i {
-  margin-right: 8px; 
+  margin-right: 8px;
 }
 
 button.active {
-  color: orange; 
+  color: orange;
+}
+
+.calendar-tab {
+  padding: 20px;
 }
 </style>
