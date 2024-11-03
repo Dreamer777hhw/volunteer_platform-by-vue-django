@@ -3,7 +3,7 @@
     * @Author: infinity
     * @Date: 2024-10-24 
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-24
+    * @LastEditTime: 2024-11-03
  -->
 
 <template>
@@ -61,6 +61,7 @@
                 v-model="applicationStartTime"
                 required
               />
+              <span v-if="errors.applicationStartTime" class="error">{{ errors.applicationStartTime }}</span>
             </div>
             <div class="input-field">
               <label>报名结束时间：</label>
@@ -69,6 +70,7 @@
                 v-model="applicationEndTime"
                 required
               />
+              <span v-if="errors.applicationEndTime" class="error">{{ errors.applicationEndTime }}</span>
             </div>
             <div class="input-field">
               <label>活动开始时间：</label>
@@ -77,6 +79,7 @@
                 v-model="activityStartTime"
                 required
               />
+              <span v-if="errors.activityStartTime" class="error">{{ errors.activityStartTime }}</span>
             </div>
             <div class="input-field">
               <label>活动结束时间：</label>
@@ -85,6 +88,7 @@
                 v-model="activityEndTime"
                 required
               />
+              <span v-if="errors.activityEndTime" class="error">{{ errors.activityEndTime }}</span>
             </div>
             <div class="input-field">
               <label>预计志愿时长：</label>
@@ -93,6 +97,7 @@
                 v-model="volunteerHours"
                 required
               />
+              <span v-if="errors.volunteerHours" class="error">{{ errors.volunteerHours }}</span>
             </div>
             <div class="input-field">
               <label>活动地点：</label>
@@ -125,6 +130,7 @@
                 v-model="acceptedVolunteers"
                 required
               />
+              <span v-if="errors.acceptedVolunteers" class="error">{{ errors.acceptedVolunteers }}</span>
             </div>
             <div class="input-field">
               <label>劳动学时：</label>
@@ -133,6 +139,7 @@
                 v-model="laborHours"
                 required
               />
+              <span v-if="errors.laborHours" class="error">{{ errors.laborHours }}</span>
             </div>
             <div class="input-field">
               <label>素拓：</label>
@@ -194,14 +201,51 @@ export default {
         '实习实践': '实习实践',
         '学习培训': '学习培训',
         '科创活动': '科创活动',
-      }
+      },
+      errors: {
+        applicationStartTime: '',
+        applicationEndTime: '',
+        activityStartTime: '',
+        activityEndTime: '',
+        acceptedVolunteers: '',
+        volunteerHours: '',
+        laborHours: '',
+      },
     };
   },
   created() {
     this.activityId = this.$route.params.activity_id_hash; // 从路由获取活动ID
     this.fetchActivityDetails();
   },
+  watch: {
+    applicationStartTime(value) {
+      this.validateApplicationStartTime(value);
+    },
+    applicationEndTime(value) {
+      this.validateApplicationEndTime(value);
+    },
+    activityStartTime(value) {
+      this.validateActivityStartTime(value);
+    },
+    activityEndTime(value) {
+      this.validateActivityEndTime(value);
+    },
+    acceptedVolunteers(value) {
+      this.validateAcceptedVolunteers(value);
+    },
+    volunteerHours(value) {
+      this.validateVolunteerHours(value);
+    },
+    laborHours(value) {
+      this.validateLaborHours(value);
+    },
+  },
   methods: {
+    /**
+     * @description 格式化日期时间
+     * @param {string} dateTime 日期时间字符串
+     * @return {string} 格式化后的日期时间字符串
+     */
     formatDateTime(dateTime) {
       if (!dateTime) return '';
       const date = new Date(dateTime);
@@ -212,6 +256,10 @@ export default {
       const minutes = String(date.getMinutes()).padStart(2, '0');
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     },
+    /**
+     * @description 获取活动详情
+     * @return {void}
+     */
     async fetchActivityDetails() {
       try {
         const response = await axios.get(`http://127.0.0.1:8000/api/reviseactivity/${this.activityId}/`);
@@ -238,6 +286,11 @@ export default {
         console.error("获取活动详情失败:", error);
       }
     },
+    /**
+     * @description 上传图片
+     * @param {Event} event 文件选择事件
+     * @return {void}
+     */
     uploadPic(event) {
       const file = event.target.files[0];
       if (file) {
@@ -259,7 +312,130 @@ export default {
         });
       }
     },
+    /**
+     * @description 验证报名开始时间
+     * @param {string} value 报名开始时间
+     * @return {void}
+     */
+    validateApplicationStartTime(value) {
+      const now = new Date().toISOString();
+      if (value <= now) {
+        this.errors.applicationStartTime = '报名开始时间应晚于当前时间';
+      } else {
+        this.errors.applicationStartTime = '';
+      }
+    },
+    /**
+     * @description 验证报名结束时间
+     * @param {string} value 报名结束时间
+     * @return {void}
+     */
+    validateApplicationEndTime(value) {
+      if (value <= this.applicationStartTime) {
+        this.errors.applicationEndTime = '报名结束时间应晚于报名开始时间';
+      } else {
+        this.errors.applicationEndTime = '';
+      }
+    },
+    /**
+     * @description 验证活动开始时间
+     * @param {string} value 活动开始时间
+     * @return {void}
+     */
+    validateActivityStartTime(value) {
+      if (value <= this.applicationEndTime) {
+        this.errors.activityStartTime = '活动开始时间应晚于报名结束时间';
+      } else {
+        this.errors.activityStartTime = '';
+      }
+    },
+    /**
+     * @description 验证活动结束时间
+     * @param {string} value 活动结束时间
+     * @return {void}
+     */
+    validateActivityEndTime(value) {
+      if (value <= this.activityStartTime) {
+        this.errors.activityEndTime = '活动结束时间应晚于活动开始时间';
+      } else {
+        this.errors.activityEndTime = '';
+      }
+    },
+    /**
+     * @description 验证招募人数
+     * @param {number} value 招募人数
+     * @return {void}
+     */
+    validateAcceptedVolunteers(value) {
+      if (value < 0) {
+        this.errors.acceptedVolunteers = '招募人数应大于等于0';
+      } else {
+        this.errors.acceptedVolunteers = '';
+      }
+    },
+    /**
+     * @description 验证预计志愿时长
+     * @param {number} value 预计志愿时长
+     * @return {void}
+     */
+    validateVolunteerHours(value) {
+      if (value < 0) {
+        this.errors.volunteerHours = '预计志愿时长应大于等于0';
+      } else {
+        this.errors.volunteerHours = '';
+      }
+    },
+    /**
+     * @description 验证劳动学时
+     * @param {number} value 劳动学时
+     * @return {void}
+     */
+    validateLaborHours(value) {
+      if (value < 0) {
+        this.errors.laborHours = '劳动学时应大于等于0';
+      } else {
+        this.errors.laborHours = '';
+      }
+    },
+    /**
+     * @description 清除错误信息
+     * @return {void}
+     */
+    clearErrors() {
+      this.errors = {
+        applicationStartTime: '',
+        applicationEndTime: '',
+        activityStartTime: '',
+        activityEndTime: '',
+        acceptedVolunteers: '',
+        volunteerHours: '',
+        laborHours: '',
+      };
+    },
+    /**
+     * @description 验证所有输入
+     * @return {boolean} 是否通过验证
+     */
+    validateInputs() {
+      this.validateApplicationStartTime(this.applicationStartTime);
+      this.validateApplicationEndTime(this.applicationEndTime);
+      this.validateActivityStartTime(this.activityStartTime);
+      this.validateActivityEndTime(this.activityEndTime);
+      this.validateAcceptedVolunteers(this.acceptedVolunteers);
+      this.validateVolunteerHours(this.volunteerHours);
+      this.validateLaborHours(this.laborHours);
+
+      return !Object.values(this.errors).some(error => error !== '');
+    },
+    /**
+     * @description 修改活动
+     * @return {void}
+     */
     async reviseActivity() {
+      this.clearErrors();
+      if (!this.validateInputs()) {
+        return;
+      }
       try {
         const updatedActivity = {
           activity_name: this.activityName,
@@ -294,13 +470,14 @@ export default {
 </script>
 
 <style scoped>
-/* TODO 修改样式 */
 .create-activity-container {
-  background-color: #f0f2f5;
+  background-image: url('../../public/background/bg.webp');
+  background-repeat: repeat;
+  background-size: auto;
+  background-position: center;
   display: flex;
   justify-content: center;
   align-items: center;
-
 }
 
 .create-activity-card {
@@ -350,11 +527,15 @@ export default {
   cursor: pointer;
 }
 
+.error {
+  color: red;
+  font-size: 0.875rem;
+}
+
 .activity-image {
   max-width: 100%;
   height: auto;
   border-radius: 5px;
   margin-top: 0.5rem;
 }
-
 </style>

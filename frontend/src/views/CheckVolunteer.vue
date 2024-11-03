@@ -2,8 +2,8 @@
     * @FileDescription: 检查志愿者申请页面，用户可以在此页面查看和管理志愿者申请 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: dreamer777hhw
-    * @LastEditTime: 2024-10-24
+    * @LastEditors: infinity
+    * @LastEditTime: 2024-11-03
  -->
 
 <template>
@@ -14,7 +14,7 @@
         <h2 class="check-volunteer-title">检查志愿者申请</h2>
         <div class="activity-name">
           <label>活动名称：</label>
-          <span>{{ activity_name }}</span>
+          <span>{{ activityName }}</span>
         </div>
         <div class="volunteer-list-header">
           <span>姓名</span>
@@ -79,6 +79,10 @@ export default {
     this.fetchVolunteerApplications();
   },
   methods: {
+    /**
+     * @description 获取志愿者申请列表
+     * @return {void}
+     */
     fetchVolunteerApplications() {
       axios.get(`http://127.0.0.1:8000/api/applications/${this.activity_id}/`)
         .then(response => {
@@ -90,6 +94,11 @@ export default {
           console.error('获取申请记录失败:', error);
         });
     },
+    /**
+     * @description 同意志愿者申请
+     * @param {string} studentId 志愿者学号
+     * @return {void}
+     */
     approveVolunteer(studentId) {
       axios.patch(`http://127.0.0.1:8000/api/applications/approve/${studentId}/`, { application_result: '已通过' })
         .then(response => {
@@ -100,6 +109,11 @@ export default {
           console.error('同意申请失败:', error);
         });
     },
+    /**
+     * @description 拒绝志愿者申请
+     * @param {string} studentId 志愿者学号
+     * @return {void}
+     */
     rejectVolunteer(studentId) {
       axios.patch(`http://127.0.0.1:8000/api/applications/reject/${studentId}/`, { application_result: '未通过' })
         .then(response => {
@@ -110,11 +124,19 @@ export default {
           console.error('拒绝申请失败:', error);
         });
     },
+    /**
+     * @description 一键同意所有志愿者申请
+     * @return {void}
+     */
     approveAll() {
       // 一键同意所有志愿者申请逻辑
       console.log('一键同意所有志愿者申请');
       // 需要实现一键同意的后端逻辑
     },
+    /**
+     * @description 一键拒绝所有志愿者申请
+     * @return {void}
+     */
     rejectAll() {
       // 一键拒绝所有志愿者申请逻辑
       console.log('一键拒绝所有志愿者申请');
@@ -126,11 +148,14 @@ export default {
 
 <style scoped>
 .check-volunteer-container {
-  background-color: #f0f2f5;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  background-image: url('../../public/background/bg.webp');
+  background-repeat: repeat;
+  background-size: auto;
+  background-position: center;
 }
 
 .check-volunteer-card {
@@ -155,7 +180,7 @@ export default {
 .volunteer-list-header,
 .volunteer-row {
   display: grid;
-  grid-template-columns: 100px 100px 150px 150px 200px 150px 150px;
+  grid-template-columns: 100px 150px 100px 150px 200px 150px 150px;
   padding: 10px;
   background-color: #f5f5f5;
   border: 1px solid #ddd;
@@ -181,6 +206,15 @@ export default {
 .action-buttons {
   display: flex;
   justify-content: space-around;
+}
+
+.action-buttons button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.2rem 0.7rem;
+  cursor: pointer;
 }
 
 .bulk-action-buttons {
