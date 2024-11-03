@@ -3,7 +3,7 @@
     * @Author: Dreamer777hhw
     * @Date: 2024-10-22
     * @LastEditors: infinity
-    * @LastEditTime: 2024-10-31
+    * @LastEditTime: 2024-11-03
  -->
 <template>
 <div>
@@ -48,7 +48,7 @@
     </div>
 
     <button class="change-password-button" @click="goToModifyPassword">修改密码</button>
-    <button class='change-password-button' @click="goToModifyInfo">修改信息</button>
+    <button v-if="userType === 'volunteer'" class='change-password-button' @click="goToModifyInfo">修改信息</button>
     <button @click="logout" class="logout-button">注销账户</button>
   </div>
 </div>
