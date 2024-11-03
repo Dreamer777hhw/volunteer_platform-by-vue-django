@@ -2,19 +2,15 @@
     * @FileDescription: 修改信息页面组件，包含姓名、学院、专业、邮箱、手机号等输入框，并进行相应的验证
     * @Author: Dreamer777hhw
     * @Date: 2024-10-23
-    * @LastEditors: dreamer777hhw
-    * @LastEditTime: 2024-11-02
-    *
-
-
-
+    * @LastEditors: infinity
+    * @LastEditTime: 2024-11-03
  -->
 <template>
 <div>
   <NavBar/>
   <div class="modify-info-container">
     <div class="info-card">
-      <h2>修改信息</h2>
+      <h2 class="info-title">修改信息</h2>
       <div class="info-item">
         <span class="info-label">姓名：</span>
         <input v-model="editName" type="text" />
@@ -175,8 +171,17 @@ export default {
   justify-content: center;
   align-items: center;
   height: 90vh;
-  background-color: #f0f2f5;
+  background-image: url('../../public/background/bg.webp');
+  background-repeat: repeat;
+  background-size: auto;
+  background-position: center;
   padding: 2rem;
+}
+
+.info-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .info-card {
@@ -189,5 +194,37 @@ export default {
 
 .info-item {
   margin-bottom: 1rem;
+}
+
+.info-item input {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 90%;
+}
+
+.info-item select {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  height: 38px; 
+}
+
+button {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
 }
 </style>
