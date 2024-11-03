@@ -45,6 +45,10 @@
             />
           </div>
           <div class="input-field">
+            <label>当前活动图片：</label>
+            <img v-if="imageUrl" :src="imageUrl" alt="活动图片" class="activity-image" />
+          </div>
+          <div class="input-field">
             <label>报名要求：</label>
             <textarea
               v-model="applicationRequirements"
