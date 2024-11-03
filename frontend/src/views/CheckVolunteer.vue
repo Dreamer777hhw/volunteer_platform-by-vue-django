@@ -2,7 +2,7 @@
     * @FileDescription: 检查志愿者申请页面，用户可以在此页面查看和管理志愿者申请 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: infinity
+    * @LastEditors: dreamer777hhw
     * @LastEditTime: 2024-11-03
  -->
 
@@ -12,10 +12,18 @@
     <div class="check-volunteer-container">
       <div class="check-volunteer-card">
         <h2 class="check-volunteer-title">检查志愿者申请</h2>
-        <div class="activity-name">
-          <label>活动名称：</label>
-          <span>{{ activityName }}</span>
+
+        <div class="activity-details">
+          <div class="activity-name">
+            <label>活动名称：</label>
+            <span>{{ activityName }}</span>
+          </div>
+          <div class="acceptance-status">
+            <label>已录取人数：</label>
+            <span>{{ acceptedVolunteers }} / {{ totalVolunteers }}</span>
+          </div>
         </div>
+
         <div class="volunteer-list-header">
           <span>姓名</span>
           <span>学号</span>
@@ -49,9 +57,10 @@
             </span>
           </div>
         </div>
+
         <div class="bulk-action-buttons">
-          <button @click="approveAll">一键同意</button>
-          <button @click="rejectAll">一键拒绝</button>
+          <button @click="approveAll" class="bulk-button">一键同意</button>
+          <button @click="rejectAll" class="bulk-button">一键拒绝</button>
         </div>
       </div>
     </div>
@@ -73,75 +82,67 @@ export default {
       activityName: '',
       volunteers: [],
       applications: [],
+      acceptedVolunteers: 0,
+      totalVolunteers: 0,
     };
   },
   mounted() {
     this.fetchVolunteerApplications();
   },
   methods: {
-    /**
-     * @description 获取志愿者申请列表
-     * @return {void}
-     */
     fetchVolunteerApplications() {
       axios.get(`http://127.0.0.1:8000/api/applications/${this.activity_id}/`)
         .then(response => {
-          this.activityName = response.data.activity_name; // 获取活动名称
-          this.volunteers = response.data.volunteers; // 获取志愿者信息
-          this.applications = response.data.applications; // 获取申请记录
+          this.activityName = response.data.activity_name;
+          this.volunteers = response.data.volunteers;
+          this.applications = response.data.applications;
+          this.acceptedVolunteers = response.data.registered_volunteers;
+          this.totalVolunteers = response.data.accepted_volunteers;
         })
         .catch(error => {
           console.error('获取申请记录失败:', error);
         });
     },
-    /**
-     * @description 同意志愿者申请
-     * @param {string} studentId 志愿者学号
-     * @return {void}
-     */
     approveVolunteer(studentId) {
       axios.patch(`http://127.0.0.1:8000/api/applications/approve/${studentId}/`, { application_result: '已通过' })
         .then(response => {
-          this.fetchVolunteerApplications(); // 重新获取申请列表
+          this.fetchVolunteerApplications();
           console.log('申请已同意:', response.data.message);
         })
         .catch(error => {
           console.error('同意申请失败:', error);
         });
     },
-    /**
-     * @description 拒绝志愿者申请
-     * @param {string} studentId 志愿者学号
-     * @return {void}
-     */
     rejectVolunteer(studentId) {
       axios.patch(`http://127.0.0.1:8000/api/applications/reject/${studentId}/`, { application_result: '未通过' })
         .then(response => {
-          this.fetchVolunteerApplications(); // 重新获取申请列表
+          this.fetchVolunteerApplications();
           console.log('申请已拒绝:', response.data.message);
         })
         .catch(error => {
           console.error('拒绝申请失败:', error);
         });
     },
-    /**
-     * @description 一键同意所有志愿者申请
-     * @return {void}
-     */
     approveAll() {
-      // 一键同意所有志愿者申请逻辑
-      console.log('一键同意所有志愿者申请');
-      // 需要实现一键同意的后端逻辑
+      axios.patch(`http://127.0.0.1:8000/api/applications/approve_all/${this.activity_id}/`)
+        .then(response => {
+          this.fetchVolunteerApplications();
+          console.log('所有申请已同意', response.data.message);
+        })
+        .catch(error => {
+          console.error('一键同意失败:', error);
+        });
     },
-    /**
-     * @description 一键拒绝所有志愿者申请
-     * @return {void}
-     */
     rejectAll() {
-      // 一键拒绝所有志愿者申请逻辑
-      console.log('一键拒绝所有志愿者申请');
-      // 需要实现一键拒绝的后端逻辑
-    }
+      axios.patch(`http://127.0.0.1:8000/api/applications/reject_all/${this.activity_id}/`)
+        .then(response => {
+          this.fetchVolunteerApplications();
+          console.log('所有申请已拒绝', response.data.message);
+        })
+        .catch(error => {
+          console.error('一键拒绝失败:', error);
+        });
+    },
   }
 };
 </script>
@@ -173,8 +174,16 @@ export default {
   font-size: 1.5rem;
 }
 
-.activity-name {
+.activity-details {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 1rem;
+}
+
+.activity-name,
+.acceptance-status {
+  font-size: 1rem;
+  color: #333;
 }
 
 .volunteer-list-header,
@@ -208,27 +217,29 @@ export default {
   justify-content: space-around;
 }
 
-.action-buttons button {
+.action-buttons button,
+.bulk-button {
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 5px;
-  padding: 0.2rem 0.7rem;
+  padding: 0.3rem 1rem;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.action-buttons button:hover,
+.bulk-button:hover {
+  background-color: #0056b3;
 }
 
 .bulk-action-buttons {
   display: flex;
   justify-content: space-between;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
-.bulk-action-buttons button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
+.bulk-button {
+  font-size: 1rem;
 }
 </style>

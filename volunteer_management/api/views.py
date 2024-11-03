@@ -644,6 +644,8 @@ class VolunteerApplicationView(APIView):
             # 序列化活动数据
             activity_serializer = ActivitySerializer(activity)
 
+            activitystatus = ActivityStatus.objects.get(activity=activity)
+
             # 获取申请中志愿者的相关信息
             volunteer_ids = [app.student.student_id for app in applications]
             volunteers = Volunteer.objects.filter(student_id__in=volunteer_ids)
@@ -654,6 +656,8 @@ class VolunteerApplicationView(APIView):
                 'activity_name': activity_serializer.data['activity_name'],
                 'applications': application_serializer.data,
                 'volunteers': volunteer_serializer.data,
+                'registered_volunteers': activitystatus.registered_volunteers,
+                'accepted_volunteers': activitystatus.accepted_volunteers,
             }, status=status.HTTP_200_OK)
 
         except Activity.DoesNotExist:
@@ -689,7 +693,9 @@ class RejectVolunteerApplicationView(APIView):
         try:
             # 获取申请记录
             application = ActivityApplication.objects.get(application_id=application_id)
-
+            activityid = application.activity.activity_id
+            activitystatus = ActivityStatus.objects.get(activity_id=activityid)
+            activitystatus.registered_volunteers -= 1
             # 更新申请结果为 "未通过"
             application.application_result = '未通过'
             application.save()
@@ -707,6 +713,54 @@ class RejectVolunteerApplicationView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class ApproveAllVolunteerApplicationsView(APIView):
+    def patch(self, request, activity_id):
+        try:
+            # 获取所有待审核的申请记录
+            applications = ActivityApplication.objects.filter(activity_id=activity_id, application_result='待审核')
+            # 更新所有申请结果为 "已通过"
+            applications.update(application_result='已通过')
+
+            # 对每个申请记录更新 VolunteerActivity
+            for application in applications:
+                VolunteerActivity.objects.update_or_create(
+                    student=application.student,
+                    activity=application.activity,
+                    defaults={'activity_result': '已录取'}
+                )
+
+            return Response({'message': '所有申请已同意'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class RejectAllVolunteerApplicationsView(APIView):
+    def patch(self, request, activity_id):
+        try:
+            # 获取所有待审核的申请记录
+            applications = ActivityApplication.objects.filter(activity_id=activity_id, application_result='待审核')
+            # 更新所有申请结果为 "未通过"
+            applications.update(application_result='未通过')
+
+            # 对每个申请记录更新 VolunteerActivity
+            for application in applications:
+                VolunteerActivity.objects.update_or_create(
+                    student=application.student,
+                    activity=application.activity,
+                    defaults={'activity_result': '未录取'}
+                )
+
+            # 更新活动的注册人数
+            activity_status = ActivityStatus.objects.get(activity_id=activity_id)
+            activity_status.registered_volunteers -= applications.count()
+            activity_status.save()
+
+            return Response({'message': '所有申请已拒绝'}, status=status.HTTP_200_OK)
+        except ActivityApplication.DoesNotExist:
+            return Response({'error': '没有待审核的申请记录'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CancelRegistrationView(APIView):
@@ -716,7 +770,8 @@ class CancelRegistrationView(APIView):
             # 获取活动和用户
             activity = Activity.objects.get(activity_id=activity_id_hash)
             volunteer = Volunteer.objects.get(student_id=user_id)  # 使用正确的字段名
-
+            activitystatus = ActivityStatus.objects.get(activity=activity)
+            activitystatus.registered_volunteers -= 1
             # 查找并删除报名记录
             application = ActivityApplication.objects.get(activity=activity, student=volunteer)
             application.delete()  # 删除报名记录
