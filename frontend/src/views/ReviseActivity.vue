@@ -241,6 +241,11 @@ export default {
     },
   },
   methods: {
+    /**
+     * @description 格式化日期时间
+     * @param {string} dateTime 日期时间字符串
+     * @return {string} 格式化后的日期时间字符串
+     */
     formatDateTime(dateTime) {
       if (!dateTime) return '';
       const date = new Date(dateTime);
@@ -251,6 +256,10 @@ export default {
       const minutes = String(date.getMinutes()).padStart(2, '0');
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     },
+    /**
+     * @description 获取活动详情
+     * @return {void}
+     */
     async fetchActivityDetails() {
       try {
         const response = await axios.get(`http://127.0.0.1:8000/api/reviseactivity/${this.activityId}/`);
@@ -277,6 +286,11 @@ export default {
         console.error("获取活动详情失败:", error);
       }
     },
+    /**
+     * @description 上传图片
+     * @param {Event} event 文件选择事件
+     * @return {void}
+     */
     uploadPic(event) {
       const file = event.target.files[0];
       if (file) {
@@ -298,6 +312,11 @@ export default {
         });
       }
     },
+    /**
+     * @description 验证报名开始时间
+     * @param {string} value 报名开始时间
+     * @return {void}
+     */
     validateApplicationStartTime(value) {
       const now = new Date().toISOString();
       if (value <= now) {
@@ -306,6 +325,11 @@ export default {
         this.errors.applicationStartTime = '';
       }
     },
+    /**
+     * @description 验证报名结束时间
+     * @param {string} value 报名结束时间
+     * @return {void}
+     */
     validateApplicationEndTime(value) {
       if (value <= this.applicationStartTime) {
         this.errors.applicationEndTime = '报名结束时间应晚于报名开始时间';
@@ -313,6 +337,11 @@ export default {
         this.errors.applicationEndTime = '';
       }
     },
+    /**
+     * @description 验证活动开始时间
+     * @param {string} value 活动开始时间
+     * @return {void}
+     */
     validateActivityStartTime(value) {
       if (value <= this.applicationEndTime) {
         this.errors.activityStartTime = '活动开始时间应晚于报名结束时间';
@@ -320,6 +349,11 @@ export default {
         this.errors.activityStartTime = '';
       }
     },
+    /**
+     * @description 验证活动结束时间
+     * @param {string} value 活动结束时间
+     * @return {void}
+     */
     validateActivityEndTime(value) {
       if (value <= this.activityStartTime) {
         this.errors.activityEndTime = '活动结束时间应晚于活动开始时间';
@@ -327,6 +361,11 @@ export default {
         this.errors.activityEndTime = '';
       }
     },
+    /**
+     * @description 验证招募人数
+     * @param {number} value 招募人数
+     * @return {void}
+     */
     validateAcceptedVolunteers(value) {
       if (value < 0) {
         this.errors.acceptedVolunteers = '招募人数应大于等于0';
@@ -334,6 +373,11 @@ export default {
         this.errors.acceptedVolunteers = '';
       }
     },
+    /**
+     * @description 验证预计志愿时长
+     * @param {number} value 预计志愿时长
+     * @return {void}
+     */
     validateVolunteerHours(value) {
       if (value < 0) {
         this.errors.volunteerHours = '预计志愿时长应大于等于0';
@@ -341,6 +385,11 @@ export default {
         this.errors.volunteerHours = '';
       }
     },
+    /**
+     * @description 验证劳动学时
+     * @param {number} value 劳动学时
+     * @return {void}
+     */
     validateLaborHours(value) {
       if (value < 0) {
         this.errors.laborHours = '劳动学时应大于等于0';
@@ -348,6 +397,10 @@ export default {
         this.errors.laborHours = '';
       }
     },
+    /**
+     * @description 清除错误信息
+     * @return {void}
+     */
     clearErrors() {
       this.errors = {
         applicationStartTime: '',
@@ -359,6 +412,10 @@ export default {
         laborHours: '',
       };
     },
+    /**
+     * @description 验证所有输入
+     * @return {boolean} 是否通过验证
+     */
     validateInputs() {
       this.validateApplicationStartTime(this.applicationStartTime);
       this.validateApplicationEndTime(this.applicationEndTime);
@@ -370,6 +427,10 @@ export default {
 
       return !Object.values(this.errors).some(error => error !== '');
     },
+    /**
+     * @description 修改活动
+     * @return {void}
+     */
     async reviseActivity() {
       this.clearErrors();
       if (!this.validateInputs()) {
