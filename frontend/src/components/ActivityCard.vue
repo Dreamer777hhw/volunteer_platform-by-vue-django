@@ -71,7 +71,7 @@ export default {
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s;
-  flex-direction: column;
+  //flex-direction: column;
 }
 
 .activity-card:hover {
