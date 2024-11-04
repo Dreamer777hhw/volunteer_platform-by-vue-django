@@ -24,7 +24,6 @@ class VolunteerViewSet(viewsets.ModelViewSet):
     queryset = Volunteer.objects.all()
     serializer_class = VolunteerSerializer
 
-
 class OrganizerViewSet(viewsets.ModelViewSet):
     queryset = Organizer.objects.all()
     serializer_class = OrganizerSerializer
@@ -44,7 +43,6 @@ class ActivityApplicationViewSet(viewsets.ModelViewSet):
 class VolunteerActivityViewSet(viewsets.ModelViewSet):
     queryset = VolunteerActivity.objects.all()
     serializer_class = VolunteerActivitySerializer
-
 
 class LoginView(APIView):
     def post(self, request):
@@ -903,11 +901,6 @@ class CancelRegistrationView(APIView):
             else:
                 # 如果记录不存在，创建新的志愿者活动记录
                 VolunteerActivity.objects.create(student=volunteer, activity=activity, activity_result='已取消')
-
-            # 更新活动的已注册志愿者人数
-            activityStatus = ActivityStatus.objects.get(activity=activity)
-            activityStatus.registered_volunteers -= 1
-            activityStatus.save()
 
             return Response({"message": "取消报名成功"}, status=status.HTTP_200_OK)
 

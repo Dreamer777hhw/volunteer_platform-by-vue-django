@@ -2,7 +2,7 @@
     * @FileDescription: 活动详情页面，展示活动的详细信息 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: dreamer777
+    * @LastEditors: infinity
     * @LastEditTime: 2024-11-04
  -->
 
@@ -36,7 +36,7 @@
                 <button v-if="applicationStatus === null && !hasRegistered" class="register-button" @click="registerForActivity">
                   报名
                 </button>
-                <button v-if="hasRegistered" class="register-button" @click="cancelRegistration">
+                <button v-if="hasRegistered && applicationStatus === null" class="register-button" @click="cancelRegistration">
                   取消报名
                 </button>
               </div>
@@ -154,6 +154,7 @@ export default {
         alert(response.data.message);
         this.hasRegistered = false; // 更新状态为未报名
         this.fetchActivityDetail(); // 重新获取活动详情以更新数据
+        window.location.reload(); // 刷新页面
       } catch (error) {
         if (error.response) {
           alert(error.response.data.error);
