@@ -130,7 +130,4 @@ button.active {
   color: orange;
 }
 
-.calendar-tab {
-  padding: 20px;
-}
 </style>
