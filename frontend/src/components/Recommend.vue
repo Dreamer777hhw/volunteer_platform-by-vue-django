@@ -2,7 +2,7 @@
     * @FileDescription: 推荐活动组件，包含猜你喜欢和热门活动两个标签页，以及活动卡片列表
     * @Author: infinity
     * @Date: 2024-10-31
-    * @LastEditors: dreamer777hhw
+    * @LastEditors: infinity
     * @LastEditTime: 2024-11-04
  -->
 

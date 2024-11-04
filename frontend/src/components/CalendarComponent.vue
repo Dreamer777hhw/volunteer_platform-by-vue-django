@@ -1,3 +1,10 @@
+<!--
+    * @FileDescription: 日历组件，展示当前月份的活动，并允许用户选择日期查看当天的活动
+    * @Author: Dreamer777hhw
+    * @Date: 2024-11-01
+    * @LastEditors: infinity
+    * @LastEditTime: 2024-11-04
+ -->
 <template>
   <div class="calendar-layout">
     <!-- 日历部分 -->
@@ -53,6 +60,10 @@ export default {
     };
   },
   computed: {
+    /**
+     * @description 将活动按每两项分组
+     * @return {Array} 分组后的活动数组
+     */
     chunkedEvents() {
       const chunkSize = 2;
       const chunks = [];
@@ -67,6 +78,10 @@ export default {
     this.generateCalendar();
   },
   methods: {
+    /**
+     * @description 获取当前月份的活动数据
+     * @return {void}
+     */
     async fetchActivities() {
       try {
         const start_date = new Date(this.currentYear, this.currentMonth, 1).toISOString().split('T')[0];
@@ -81,6 +96,10 @@ export default {
         console.error('Failed to load activities:', error);
       }
     },
+    /**
+     * @description 生成当前月份的日历
+     * @return {void}
+     */
     generateCalendar() {
       const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
       this.daysInMonth = Array.from({ length: daysInMonth }, (_, i) => ({
@@ -89,6 +108,10 @@ export default {
       }));
       this.markEventDays();
     },
+    /**
+     * @description 标记有活动的日期
+     * @return {void}
+     */
     markEventDays() {
       this.activities.forEach(activity => {
         const activityDate = new Date(activity.activity_start_time);
@@ -98,12 +121,21 @@ export default {
         }
       });
     },
+    /**
+     * @description 选择某一天并显示当天的活动
+     * @param {Object} day 选中的日期对象
+     * @return {void}
+     */
     selectDay(day) {
       const selectedDate = new Date(this.currentYear, this.currentMonth, day.date);
       this.selectedDayEvents = this.activities.filter(activity =>
         new Date(activity.activity_start_time).toDateString() === selectedDate.toDateString()
       );
     },
+    /**
+     * @description 切换到上一个月
+     * @return {void}
+     */
     previousMonth() {
       if (this.currentMonth === 0) {
         this.currentMonth = 11;
@@ -114,6 +146,10 @@ export default {
       this.generateCalendar();
       this.fetchActivities();
     },
+    /**
+     * @description 切换到下一个月
+     * @return {void}
+     */
     nextMonth() {
       if (this.currentMonth === 11) {
         this.currentMonth = 0;
@@ -130,6 +166,7 @@ export default {
 
 <style scoped>
 .calendar-layout {
+  margin-top: 10px;
   display: flex;
   width: 100%;
 }
