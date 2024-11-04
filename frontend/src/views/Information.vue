@@ -2,18 +2,19 @@
     * @FileDescription: Information 视图组件，展示用户的活动信息 
     * @Author: infinity
     * @Date: 2024-10-23 
-    * @LastEditors: dreamer777hhw
+    * @LastEditors: infinity
     * @LastEditTime: 2024-11-04
  -->
 
 <template>
-  <div>
+  <div class="information">
     <NavBar />
     <div class="activities-container">
       <div class="sidebar">
         <h3>我的</h3>
         <ul>
-          <li>我的活动</li>
+          <li @click="navigateToCurrentPage" class="sidebar-item">我的活动</li>
+          <li v-if="isOrganizer" @click="navigateToCreateActivity" class="sidebar-item create-activity">创建活动</li>
         </ul>
       </div>
       <div class="content">
@@ -34,8 +35,6 @@
             />
           </div>
         </div>
-
-        <button class="create-activity-btn" @click="navigateToCreateActivity">创建活动</button>
 
         <div class="activity-table-header">
           <span>活动名称</span>
@@ -85,16 +84,28 @@ export default {
     }
   },
   computed: {
+    /**
+     * @description 获取可用的状态选项
+     * @return {Array} 返回状态选项数组
+     */
     availableStatuses() {
       return this.isOrganizer
         ? ['未开始', '招募中', '已招满', '进行中', '已结束', '已取消']
         : ['未参与', '参与中', '已参与', '已报名', '已录取', '未录取', '已取消'];
     },
+    /**
+     * @description 判断当前用户是否为组织者
+     * @return {boolean} 返回当前用户是否为组织者
+     */
     isOrganizer() {
       return localStorage.getItem('user_type') === 'organizer';
     },
   },
   methods: {
+    /**
+     * @description 获取用户活动数据
+     * @return {void}
+     */
     async fetchActivities() {
       const response = await axios.get(`http://127.0.0.1:8000/api/user-activities/`, {
         params: {
@@ -108,6 +119,10 @@ export default {
       this.activities = response.data.results; // 更新活动列表
       this.totalActivities = response.data.count; // 更新总活动数
     },
+    /**
+     * @description 根据状态过滤活动
+     * @return {void}
+     */
     filterByStatus() {
       if (this.selectedStatus === 'all') {
         this.selectedStatus = ''; // 清空选择条件
@@ -115,17 +130,42 @@ export default {
       this.currentPage = 1; // 重置到第一页
       this.fetchActivities();
     },
+    /**
+     * @description 根据搜索查询过滤活动
+     * @return {void}
+     */
     searchActivities() {
       this.currentPage = 1; // 重置到第一页
       this.fetchActivities();
     },
+    /**
+     * @description 处理分页变化
+     * @param {number} page 当前页码
+     * @return {void}
+     */
     handlePageChange(page) {
       this.currentPage = page;
       this.fetchActivities();
     },
+    /**
+     * @description 跳转到创建活动页面
+     * @return {void}
+     */
     navigateToCreateActivity() {
       this.$router.push('/activity/create');
     },
+    /**
+     * @description 跳转到当前页面
+     * @return {void}
+     */
+    navigateToCurrentPage() {
+      this.$router.push('/information');
+    },
+    /**
+     * @description 获取活动状态
+     * @param {Object} activity 活动对象
+     * @return {string} 返回活动状态
+     */
     getActivityResult(activity) {
       return this.isOrganizer
         ? activity.organizer_activity_result // 组织者活动状态
@@ -139,72 +179,13 @@ export default {
 </script>
 
 <style scoped>
-/* 这里保持原样，不需要修改 */
-.activities-container {
-  display: flex;
-  width: 80%;
-  margin: 100px auto;
-  border: 1px solid #ddd;
-}
-.sidebar {
-  width: 120px;
-  padding: 20px;
-  border: 1px solid #ddd;
-}
-.content {
-  flex-grow: 1;
-  padding: 20px;
-  border: 1px solid #ddd;
-}
-.filter-bar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  border: 1px solid #ddd;
-}
-.activity-table-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-}
-.activity-table-header span {
-  flex-basis: 40%;
-  text-align: center;
-}
-.activity-table-header span:nth-child(2) {
-  flex-basis: 32%;
-}
-.activity-table-header span:nth-child(3) {
-  flex-basis: 28%;
-}
-.activity-list {
-  margin-top: 10px;
-  border: 1px solid #ddd;
-}
-.activity-row {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-.activity-row span {
-  flex-basis: 40%;
-  text-align: center;
+.information {
+  background-image: url('../../public/background/bg.webp');
+  background-repeat: repeat;
+  background-size: auto;
+  background-position: center;
 }
 
-button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  border: none;
-  background-color: #4CAF50;
-  color: white;
-  cursor: pointer;
-}
-button:hover {
-  background-color: #45a049;
-}
 .activities-container {
   display: flex;
   width: 80%;
@@ -212,6 +193,7 @@ button:hover {
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
 }
 
 .sidebar {
@@ -225,29 +207,10 @@ button:hover {
   padding: 20px;
 }
 
-.create-activity-btn {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 20px; /* 添加底部间距 */
-  transition: background-color 0.3s;
-}
-
-.create-activity-btn:hover {
-  background-color: #45a049;
-}
-
 .filter-bar {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
 }
 
 .activity-table-header {
@@ -259,8 +222,22 @@ button:hover {
   border-radius: 4px;
 }
 
+.activity-table-header span {
+  flex-basis: 40%;
+  text-align: center;
+}
+
+.activity-table-header span:nth-child(2) {
+  flex-basis: 32%;
+}
+
+.activity-table-header span:nth-child(3) {
+  flex-basis: 28%;
+}
+
 .activity-list {
   margin-top: 10px;
+  border: 1px solid #ddd;
 }
 
 .activity-row {
@@ -292,5 +269,23 @@ button:hover {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-</style>
 
+.sidebar ul {
+  list-style-type: none; 
+  padding: 0;
+}
+
+.sidebar-item {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.sidebar-item:hover {
+  background-color: #f0f0f0;
+}
+
+.create-activity {
+  margin-top: 20px; 
+}
+</style>
