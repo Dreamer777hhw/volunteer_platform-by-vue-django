@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Volunteer, Organizer, Activity, ActivityStatus, ActivityApplication, VolunteerActivity, OrganizerActivity
-from .serializers import VolunteerSerializer, OrganizerSerializer, ActivitySerializer, ActivityStatusSerializer, ActivityApplicationSerializer, VolunteerActivitySerializer
+from .serializers import VolunteerSerializer, OrganizerSerializer, ActivitySerializer, ActivityStatusSerializer, ActivityApplicationSerializer, VolunteerActivitySerializer, OrganizerActivitySerializer
 # from rest_framework.permissions import IsAuthenticated
 import jwt
 from django.contrib.auth.hashers import make_password, check_password
@@ -341,45 +341,51 @@ class UserActivityView(APIView):
         if user_type == 'volunteer':
             volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
 
-        elif user_type == 'organizer':
-            organizer_activities = OrganizerActivity.objects.filter(organizer_id=user_id)
-
-        else:
-            return Response({'error': 'Invalid user_type'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # 处理状态过滤
-        status_filter = request.GET.get('status')
-        if status_filter:
-            if user_type == 'volunteer':
+            # 处理状态过滤
+            status_filter = request.GET.get('status')
+            if status_filter:
                 volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
-            elif user_type == 'organizer':
-                organizer_activities = organizer_activities.filter(activity_result=status_filter)
 
-        # 处理搜索查询
-        search_query = request.GET.get('search')
-        if search_query:
-            if user_type == 'volunteer':
+            # 处理搜索查询
+            search_query = request.GET.get('search')
+            if search_query:
                 volunteer_activities = volunteer_activities.filter(
                     Q(activity__activity_name__icontains=search_query) |
                     Q(activity__activity_location__icontains=search_query) |
-                    Q(activity__organizer__organizer_name__icontains=search_query)  # 注意这里的连接
+                    Q(activity__organizer__organizer_name__icontains=search_query)
                 )
-            elif user_type == 'organizer':
+
+            # 分页处理
+            paginator = UserActivityPagination()
+            paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
+            serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
+
+        elif user_type == 'organizer':
+            organizer_activities = OrganizerActivity.objects.filter(organizer_id=user_id)
+
+            # 处理状态过滤
+            status_filter = request.GET.get('status')
+            if status_filter:
+                organizer_activities = organizer_activities.filter(activity_result=status_filter)
+
+            # 处理搜索查询
+            search_query = request.GET.get('search')
+            if search_query:
                 organizer_activities = organizer_activities.filter(
                     Q(activity__activity_name__icontains=search_query) |
                     Q(activity__activity_location__icontains=search_query)
                 )
 
-        # 分页处理
-        paginator = UserActivityPagination()
-        if user_type == 'volunteer':
-            paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
-            serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
-        else:
+            # 分页处理
+            paginator = UserActivityPagination()
             paginated_activities = paginator.paginate_queryset(organizer_activities, request)
             serializer = ActivitySerializer([oa.activity for oa in paginated_activities], many=True)
 
+        else:
+            return Response({'error': 'Invalid user_type'}, status=status.HTTP_400_BAD_REQUEST)
+
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class PasswordChangeView(APIView):
@@ -463,7 +469,6 @@ class UploadImageView(APIView):
 class CreateActivityView(APIView):
     def post(self, request):
         serializer = ActivitySerializer(data=request.data)
-
         # 检查数据是否有效
         if serializer.is_valid():
             activity = serializer.save()  # 保存活动到数据库
@@ -482,12 +487,37 @@ class CreateActivityView(APIView):
 
             if status_serializer.is_valid():
                 status_serializer.save()  # 保存活动状态到数据库
+
+                # 获取当前组织者的信息
+                organizer_id = request.data.get('organizer')
+                if organizer_id:
+                    try:
+                        organizer = Organizer.objects.get(organizer_id=organizer_id)
+
+                        # 创建对应的 OrganizerActivity 实例
+                        organizer_activity_data = {
+                            'organizer': organizer.organizer_id,
+                            'activity': activity.activity_id,
+                            'activity_result': '未开始',  # 初始结果
+                        }
+                        organizer_activity_serializer = OrganizerActivitySerializer(data=organizer_activity_data)
+
+                        if organizer_activity_serializer.is_valid():
+                            organizer_activity_serializer.save()  # 保存组织者活动到数据库
+                        else:
+                            return Response(organizer_activity_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                    except Organizer.DoesNotExist:
+                        return Response({'error': '组织者不存在'}, status=status.HTTP_404_NOT_FOUND)
+
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+
             else:
                 return Response(status_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # 返回验证错误
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class RegisterForActivityView(APIView):
     def post(self, request, activity_id_hash, user_id):
