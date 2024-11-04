@@ -2,33 +2,39 @@
     * @FileDescription: 活动列表组件，包含活动筛选、排序和展示功能
     * @Author: infinity
     * @Date: 2024-10-22
-    * @LastEditors: dreamer777hhw
-    * @LastEditTime: 2024-10-28
+    * @LastEditors: infinity
+    * @LastEditTime: 2024-11-04
  -->
 
 <template>
   <div>
-    <h1>所有活动</h1>
+    <h1 class="title">所有活动</h1>
 
-    <div class="filter-row">
-      <button @click="clearFilters">全部</button>
-      <label v-for="label in labels" :key="label">
-        <input type="checkbox" v-model="selectedLabels" :value="label"> {{ label }}
-      </label>
-    </div>
+    <div class="filter-container">
+      <div class="filter-row">
+        <button class="clear-button" @click="clearFilters">全部</button>
+        <label v-for="label in labels" :key="label" class="filter-label">
+          <input type="checkbox" v-model="selectedLabels" :value="label" class="filter-checkbox"> {{ label }}
+        </label>
+      </div>
 
-    <div class="filter-row">
-      <label v-for="status in statuses" :key="status">
-        <input type="checkbox" v-model="selectedStatuses" :value="status"> {{ status }}
-      </label>
-    </div>
+      <hr class="divider">
 
-    <div class="filter-row">
-      <input type="text" v-model="searchQuery" placeholder="搜索活动名称" />
-      <select v-model="sortBy">
-        <option value="time">按时间排序</option>
-        <option value="participants">按可报名人数排序</option>
-      </select>
+      <div class="filter-row">
+        <label v-for="status in statuses" :key="status" class="filter-label">
+          <input type="checkbox" v-model="selectedStatuses" :value="status" class="filter-checkbox"> {{ status }}
+        </label>
+      </div>
+
+      <hr class="divider">
+
+      <div class="filter-row">
+        <input type="text" v-model="searchQuery" placeholder="搜索活动名称" class="search-input" />
+        <select v-model="sortBy" class="sort-select">
+          <option value="time">按时间排序</option>
+          <option value="participants">按可报名人数排序</option>
+        </select>
+      </div>
     </div>
 
     <div>
@@ -140,10 +146,70 @@ export default {
 </script>
 
 <style scoped>
+.title {
+  color: #666;
+  font-size: 1.4em;
+}
+
+.filter-container {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .filter-row {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 30px;
   margin-bottom: 15px;
+}
+
+.clear-button {
+  font-size: 1em;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  font-size: 1em;
+  color: #666;
+}
+
+.filter-checkbox {
+  width: 1em;
+  height: 1em;
+  margin-right: 5px;
+}
+
+.divider {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #ccc;
+  /* 略微透明 */
+  opacity: 0.3;
+  margin: 10px 0;
+}
+
+.search-input {
+  /* flex: 1; */
+  padding: 7px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 25%;
+}
+
+.sort-select {
+  padding: 7px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  /* 右对齐 */
+  margin-left: auto;
+
 }
 
 .load-more-trigger {
