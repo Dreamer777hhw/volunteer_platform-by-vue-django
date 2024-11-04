@@ -28,13 +28,13 @@
               <p v-if="activity.activity_location" class="activity-location">活动地点: {{ activity.activity_location }}</p>
               <p v-if="activity.sutuo">素拓: {{ activity.sutuo }}</p>
               <p v-if="activity.application_requirements">报名要求: {{ activity.application_requirements }}</p>
-              <p>总点击数: {{ activity.total_clicks }}</p>
+<!--              <p>总点击数: {{ activity.total_clicks }}</p>-->
 
               <div v-if="isVolunteer">
                 <p v-if="applicationStatus === '已通过'" class="status-approved">申请已通过</p>
                 <p v-if="applicationStatus === '未通过'" class="status-denied">申请未通过</p>
-                <button v-else class="register-button" :disabled="isFull || hasRegistered" @click="registerForActivity">
-                  {{ isFull ? '报名已满' : hasRegistered ? '已报名' : '报名' }}
+                <button v-else class="register-button" :disabled="hasRegistered" @click="registerForActivity">
+                  {{ hasRegistered ? '已报名' : '报名' }}
                 </button>
                 <button v-if="hasRegistered" class="register-button" @click="cancelRegistration">
                   取消报名
@@ -79,9 +79,9 @@ export default {
     };
   },
   computed: {
-    isFull() {
-      return this.activity.accepted_volunteers <= this.activity.registered_volunteers;
-    },
+    // isFull() {
+    //   return this.activity.accepted_volunteers <= this.activity.registered_volunteers;
+    // },
     registrationPeriod() {
       return `${this.activity.application_start_time} ~ ${this.activity.application_end_time}`;
     },

@@ -229,7 +229,7 @@ class ActivityDetailView(APIView):
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
                 'organizer': activity.organizer.organizer_name,
-                'accepted_volunteers': activity.accepted_volunteers,
+                'accepted_volunteers': activitystatus.accepted_volunteers,
                 'registered_volunteers': activitystatus.registered_volunteers,
                 'activity_status': activitystatus.activity_status,
                 'clicks_in_1h': activitystatus.clicks_in_1h,
@@ -268,7 +268,7 @@ class ActivityListView(APIView):
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
                 'organizer': activity.organizer.organizer_name,
-                'accepted_volunteers': activity.accepted_volunteers,
+                'accepted_volunteers': activitystatus.accepted_volunteers,
                 'registered_volunteers': activitystatus.registered_volunteers,
                 'activity_status': activitystatus.activity_status,
                 'clicks_in_1h': activitystatus.clicks_in_1h,
@@ -501,7 +501,6 @@ class RegisterForActivityView(APIView):
             # 检查名额是否充足
             if activity_status.registered_volunteers < activity_status.accepted_volunteers:
                 # 增加已报名人数
-                activity_status.registered_volunteers += 1
                 activity_status.save()
 
                 # 获取志愿者对象
@@ -667,6 +666,9 @@ class ApproveVolunteerApplicationView(APIView):
             # 更新申请结果为 "已通过"
             application.application_result = '已通过'
             application.save()
+            activityid = application.activity.activity_id
+            activitystatus = ActivityStatus.objects.get(activity_id=activityid)
+            activitystatus.registered_volunteers -= 1
 
             # 创建或更新 VolunteerActivity 记录
             VolunteerActivity.objects.update_or_create(

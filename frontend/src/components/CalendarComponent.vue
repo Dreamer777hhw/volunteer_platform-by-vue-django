@@ -1,5 +1,6 @@
 <template>
   <div class="calendar-layout">
+    <!-- 日历部分 -->
     <div class="calendar-container">
       <div class="calendar-header">
         <button @click="previousMonth">«</button>
@@ -16,17 +17,25 @@
       </div>
     </div>
 
+    <!-- 活动列表部分 -->
     <div class="event-list-container">
       <h3>活动列表</h3>
       <div v-if="selectedDayEvents.length > 0" class="event-list">
         <div class="event-list-slider">
-          <ActivityCard v-for="event in selectedDayEvents" :key="event.activity_id" :activity="event" />
+          <ActivityCard
+            v-for="event in selectedDayEvents"
+            :key="event.activity_id"
+            :activity="event"
+            class="activity-card"
+          />
         </div>
       </div>
       <div v-else class="no-events">该天无活动</div>
     </div>
   </div>
 </template>
+
+
 
 <script>
 import ActivityCard from '@/components/ActivityCard.vue';
@@ -113,7 +122,8 @@ export default {
 <style scoped>
 .calendar-layout {
   display: flex;
-  gap: 20px;
+  gap: 24px; /* 间距 */
+  padding: 16px;
 }
 
 .calendar-container {
@@ -175,8 +185,9 @@ export default {
 }
 
 .event-list-container {
-  width: 50%;
-  max-width: 600px;
+  width: 100%;
+  max-width: 800px; /* 调整容器宽度以适应两个卡片 */
+  overflow-x: auto;
 }
 
 .event-list {
@@ -188,13 +199,15 @@ export default {
 
 .event-list-slider {
   display: flex;
-  gap: 10px;
+  gap: 16px;
+  overflow-x: scroll;
+  padding: 8px;
 }
 
 .event-list-slider > * {
-  flex: 0 0 calc(48%); /* 每行显示四个活动，设置宽度为容器宽度的四分之一 */
-  max-width: calc(48%); /* 可以适当增大以增加宽度 */
-  height: 300px; /* 保持高度 */
+  flex: 0 0 380px; /* 固定每个活动卡片的宽度 */
+  max-width: 500px;
+  height: 220px; /* 保持高度 */
   display: inline-block;
 }
 
@@ -203,4 +216,23 @@ export default {
   color: #999;
   text-align: center;
 }
+.activity-card {
+  min-width: 350px; /* 调整单个卡片的最小宽度 */
+  flex: 1;
+}
+
+.activity-image {
+  width: 40%;
+  height: auto;
+  object-fit: cover;
+}
+
+.activity-info {
+  width: 60%;
+  padding: 5px;
+  padding-left: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
 </style>
