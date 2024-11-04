@@ -229,6 +229,7 @@ class ActivityDetailView(APIView):
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
                 'organizer': activity.organizer.organizer_name,
+                'organizer_id': activity.organizer.organizer_id,
                 'accepted_volunteers': activitystatus.accepted_volunteers,
                 'registered_volunteers': activitystatus.registered_volunteers,
                 'activity_status': activitystatus.activity_status,
@@ -268,6 +269,7 @@ class ActivityListView(APIView):
                 'contact_name': activity.contact_name,
                 'contact_phone': activity.contact_phone,
                 'organizer': activity.organizer.organizer_name,
+                'organizer_id': activity.organizer.organizer_id,
                 'accepted_volunteers': activitystatus.accepted_volunteers,
                 'registered_volunteers': activitystatus.registered_volunteers,
                 'activity_status': activitystatus.activity_status,
@@ -333,17 +335,19 @@ class UserActivityPagination(PageNumberPagination):
 class UserActivityView(APIView):
     def get(self, request):
         user_id = request.GET.get('user_id')
-        user_type = request.GET.get('user_type')  # 假设前端会传递 user_type
+        user_type = request.GET.get('user_type')
         if not user_id or not user_type:
             return Response({'error': 'user_id and user_type are required'}, status=status.HTTP_400_BAD_REQUEST)
 
+        activities_data = []
+
         # 根据用户类型获取活动
         if user_type == 'volunteer':
-            volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id)
+            volunteer_activities = VolunteerActivity.objects.filter(student_id=user_id).select_related('activity')
 
             # 处理状态过滤
             status_filter = request.GET.get('status')
-            if status_filter:
+            if status_filter and status_filter != 'all':
                 volunteer_activities = volunteer_activities.filter(activity_result=status_filter)
 
             # 处理搜索查询
@@ -355,17 +359,42 @@ class UserActivityView(APIView):
                     Q(activity__organizer__organizer_name__icontains=search_query)
                 )
 
-            # 分页处理
-            paginator = UserActivityPagination()
-            paginated_activities = paginator.paginate_queryset(volunteer_activities, request)
-            serializer = ActivitySerializer([va.activity for va in paginated_activities], many=True)
+            # 构建活动数据
+            for va in volunteer_activities:
+                activities_data.append({
+                    'activity_id': va.activity.activity_id,
+                    'activity_name': va.activity.activity_name,
+                    'activity_location': va.activity.activity_location,
+                    'organizer_name': va.activity.organizer.organizer_name,
+                    'activity_result': va.activity_result,
+                    'activity_description': va.activity.activity_description,
+                    'activity_tags': va.activity.activity_tags,
+                    'activity_image_path': va.activity.activity_image_path,
+                    'application_requirements': va.activity.application_requirements,
+                    'application_start_time': va.activity.application_start_time,
+                    'application_end_time': va.activity.application_end_time,
+                    'activity_start_time': va.activity.activity_start_time,
+                    'activity_end_time': va.activity.activity_end_time,
+                    'estimated_volunteer_hours': va.activity.estimated_volunteer_hours,
+                    'contact_name': va.activity.contact_name,
+                    'contact_phone': va.activity.contact_phone,
+                    'accepted_volunteers': va.activity.activitystatus.accepted_volunteers,
+                    'registered_volunteers': va.activity.activitystatus.registered_volunteers,
+                    'activity_status': va.activity.activitystatus.activity_status,
+                    'clicks_in_1h': va.activity.activitystatus.clicks_in_1h,
+                    'clicks_in_12h': va.activity.activitystatus.clicks_in_12h,
+                    'total_clicks': va.activity.activitystatus.total_clicks,
+                    'labor_hours': va.activity.labor_hours,
+                    'sutuo': va.activity.sutuo,
+                    'notes': va.activity.notes,
+                })
 
         elif user_type == 'organizer':
-            organizer_activities = OrganizerActivity.objects.filter(organizer_id=user_id)
+            organizer_activities = OrganizerActivity.objects.filter(organizer_id=user_id).select_related('activity')
 
             # 处理状态过滤
             status_filter = request.GET.get('status')
-            if status_filter:
+            if status_filter and status_filter != 'all':
                 organizer_activities = organizer_activities.filter(activity_result=status_filter)
 
             # 处理搜索查询
@@ -376,15 +405,42 @@ class UserActivityView(APIView):
                     Q(activity__activity_location__icontains=search_query)
                 )
 
-            # 分页处理
-            paginator = UserActivityPagination()
-            paginated_activities = paginator.paginate_queryset(organizer_activities, request)
-            serializer = ActivitySerializer([oa.activity for oa in paginated_activities], many=True)
+            # 构建活动数据
+            for oa in organizer_activities:
+                activities_data.append({
+                    'activity_id': oa.activity.activity_id,
+                    'activity_name': oa.activity.activity_name,
+                    'activity_location': oa.activity.activity_location,
+                    'activity_result': oa.activity_result,
+                    'activity_description': oa.activity.activity_description,
+                    'activity_tags': oa.activity.activity_tags,
+                    'activity_image_path': oa.activity.activity_image_path,
+                    'application_requirements': oa.activity.application_requirements,
+                    'application_start_time': oa.activity.application_start_time,
+                    'application_end_time': oa.activity.application_end_time,
+                    'activity_start_time': oa.activity.activity_start_time,
+                    'activity_end_time': oa.activity.activity_end_time,
+                    'estimated_volunteer_hours': oa.activity.estimated_volunteer_hours,
+                    'contact_name': oa.activity.contact_name,
+                    'contact_phone': oa.activity.contact_phone,
+                    'organizer': oa.activity.organizer.organizer_name,
+                    'organizer_id': oa.activity.organizer.organizer_id,
+                    'accepted_volunteers': oa.activity.activitystatus.accepted_volunteers,
+                    'registered_volunteers': oa.activity.activitystatus.registered_volunteers,
+                    'activity_status': oa.activity.activitystatus.activity_status,
+                    'clicks_in_1h': oa.activity.activitystatus.clicks_in_1h,
+                    'clicks_in_12h': oa.activity.activitystatus.clicks_in_12h,
+                    'total_clicks': oa.activity.activitystatus.total_clicks,
+                    'labor_hours': oa.activity.labor_hours,
+                    'sutuo': oa.activity.sutuo,
+                    'notes': oa.activity.notes,
+                })
 
         else:
             return Response({'error': 'Invalid user_type'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return paginator.get_paginated_response(serializer.data)
+        return Response({'activities': activities_data}, status=status.HTTP_200_OK)
+
 
 
 
@@ -698,14 +754,14 @@ class ApproveVolunteerApplicationView(APIView):
             application.save()
             activityid = application.activity.activity_id
             activitystatus = ActivityStatus.objects.get(activity_id=activityid)
-            activitystatus.registered_volunteers -= 1
+            activitystatus.registered_volunteers += 1
+            activitystatus.save()
 
             # 创建或更新 VolunteerActivity 记录
-            VolunteerActivity.objects.update_or_create(
+            VolunteerActivity.objects.filter(
                 student=application.student,
-                activity=application.activity,
-                defaults={'activity_result': '已录取'}
-            )
+                activity=application.activity
+            ).update(activity_result='已录取')
 
             return Response({'message': '申请已同意'}, status=status.HTTP_200_OK)
         except ActivityApplication.DoesNotExist:
@@ -721,16 +777,16 @@ class RejectVolunteerApplicationView(APIView):
             activityid = application.activity.activity_id
             activitystatus = ActivityStatus.objects.get(activity_id=activityid)
             activitystatus.registered_volunteers -= 1
+            activitystatus.save()
             # 更新申请结果为 "未通过"
             application.application_result = '未通过'
             application.save()
 
             # 创建或更新 VolunteerActivity 记录，标记为未录取
-            VolunteerActivity.objects.update_or_create(
+            VolunteerActivity.objects.filter(
                 student=application.student,
-                activity=application.activity,
-                defaults={'activity_result': '未录取'}
-            )
+                activity=application.activity
+            ).update(activity_result='未录取')
 
             return Response({'message': '申请已拒绝'}, status=status.HTTP_200_OK)
         except ActivityApplication.DoesNotExist:
@@ -738,23 +794,41 @@ class RejectVolunteerApplicationView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class ApproveAllVolunteerApplicationsView(APIView):
     def patch(self, request, activity_id):
         try:
+            # 获取活动状态
+            activity_status = ActivityStatus.objects.get(activity_id=activity_id)
+
             # 获取所有待审核的申请记录
             applications = ActivityApplication.objects.filter(activity_id=activity_id, application_result='待审核')
-            # 更新所有申请结果为 "已通过"
-            applications.update(application_result='已通过')
+            # 获取可批准的数量
+            available_spots = activity_status.accepted_volunteers - activity_status.registered_volunteers
 
-            # 对每个申请记录更新 VolunteerActivity
-            for application in applications:
-                VolunteerActivity.objects.update_or_create(
+            if available_spots <= 0:
+                return Response({'error': '名额已满，无法批准更多申请'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 计算实际可批准的数量
+            approved_count = min(len(applications), available_spots)
+
+            # 更新申请状态和 VolunteerActivity
+            for application in applications[:approved_count]:
+                application.application_result = '已通过'
+                application.save()
+
+                VolunteerActivity.objects.filter(
                     student=application.student,
-                    activity=application.activity,
-                    defaults={'activity_result': '已录取'}
-                )
+                    activity=application.activity
+                ).update(activity_result='已录取')
 
-            return Response({'message': '所有申请已同意'}, status=status.HTTP_200_OK)
+            # 更新活动的注册人数
+            activity_status.registered_volunteers += approved_count
+            activity_status.save()
+
+            return Response({'message': f'已批准 {approved_count} 条申请'}, status=status.HTTP_200_OK)
+        except ActivityStatus.DoesNotExist:
+            return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -762,29 +836,49 @@ class ApproveAllVolunteerApplicationsView(APIView):
 class RejectAllVolunteerApplicationsView(APIView):
     def patch(self, request, activity_id):
         try:
+            # 获取活动状态
+            activity_status = ActivityStatus.objects.get(activity_id=activity_id)
+
             # 获取所有待审核的申请记录
             applications = ActivityApplication.objects.filter(activity_id=activity_id, application_result='待审核')
-            # 更新所有申请结果为 "未通过"
-            applications.update(application_result='未通过')
 
-            # 对每个申请记录更新 VolunteerActivity
-            for application in applications:
-                VolunteerActivity.objects.update_or_create(
-                    student=application.student,
-                    activity=application.activity,
-                    defaults={'activity_result': '未录取'}
-                )
+            if applications.exists():
+                # 如果注册人数已满，拒绝所有待审核的申请
+                if activity_status.registered_volunteers >= activity_status.accepted_volunteers:
+                    applications.update(application_result='未通过')
 
-            # 更新活动的注册人数
-            activity_status = ActivityStatus.objects.get(activity_id=activity_id)
-            activity_status.registered_volunteers -= applications.count()
-            activity_status.save()
+                    # 更新 VolunteerActivity
+                    for application in applications:
+                        VolunteerActivity.objects.filter(
+                            student=application.student,
+                            activity=application.activity
+                        ).update(activity_result='未录取')
 
-            return Response({'message': '所有申请已拒绝'}, status=status.HTTP_200_OK)
-        except ActivityApplication.DoesNotExist:
-            return Response({'error': '没有待审核的申请记录'}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({'message': '所有申请已拒绝'}, status=status.HTTP_200_OK)
+                else:
+                    # 如果未满，按正常流程拒绝
+                    applications.update(application_result='未通过')
+
+                    # 更新 VolunteerActivity
+                    for application in applications:
+                        VolunteerActivity.objects.filter(
+                            student=application.student,
+                            activity=application.activity
+                        ).update(activity_result='未录取')
+
+                    # 更新活动的注册人数
+                    activity_status.registered_volunteers -= applications.count()
+                    activity_status.save()
+
+                    return Response({'message': '所有申请已拒绝'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': '没有待审核的申请记录'}, status=status.HTTP_404_NOT_FOUND)
+
+        except ActivityStatus.DoesNotExist:
+            return Response({'error': '活动不存在'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
@@ -888,9 +982,9 @@ class CalendarView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ActivityClickView(APIView):
-    def post(self, request, activity_id):
+    def post(self, request, activity_id_hash):
         try:
-            activity_status = ActivityStatus.objects.get(activity_id=activity_id)
+            activity_status = ActivityStatus.objects.get(activity_id=activity_id_hash)
             activity_status.total_clicks += 1  # 增加总点击数
             activity_status.clicks_in_1h += 1  # 增加1小时内点击数
             activity_status.save()

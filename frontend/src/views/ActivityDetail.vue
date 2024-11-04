@@ -2,8 +2,8 @@
     * @FileDescription: 活动详情页面，展示活动的详细信息 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: infinity
-    * @LastEditTime: 2024-11-03
+    * @LastEditors: dreamer777
+    * @LastEditTime: 2024-11-04
  -->
 
 <template>
@@ -33,15 +33,15 @@
               <div v-if="isVolunteer">
                 <p v-if="applicationStatus === '已通过'" class="status-approved">申请已通过</p>
                 <p v-if="applicationStatus === '未通过'" class="status-denied">申请未通过</p>
-                <button v-else class="register-button" :disabled="hasRegistered" @click="registerForActivity">
-                  {{ hasRegistered ? '已报名' : '报名' }}
+                <button v-if="applicationStatus === null && !hasRegistered" class="register-button" @click="registerForActivity">
+                  报名
                 </button>
                 <button v-if="hasRegistered" class="register-button" @click="cancelRegistration">
                   取消报名
                 </button>
               </div>
 
-              <div v-if="isOrganizer" class="organizer-buttons">
+              <div v-if="isOrganizer && isRightOrganizer" class="organizer-buttons">
                 <button class="register-button" @click="navigateToReviseActivity">修改活动</button>
                 <button class="register-button" @click="navigateToCheckVolunteer">审核志愿者</button>
               </div>
@@ -76,6 +76,7 @@ export default {
       activity: {},
       hasRegistered: false,
       applicationStatus: null, // 新增状态
+      isRightOrganizer: false,
     };
   },
   computed: {
@@ -94,28 +95,32 @@ export default {
   },
   methods: {
     async fetchActivityDetail() {
-        const activityIdHash = this.$route.params.activity_id_hash;
-        try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/`);
-            this.activity = response.data;
+      const activityIdHash = this.$route.params.activity_id_hash;
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/`);
+        this.activity = response.data;
+        // 检查是否是当前活动的组织者
+        this.activity.organizer_id = String(this.activity.organizer_id);
 
-            // 更新点击数
-            await axios.post(`http://127.0.0.1:8000/api/activity/click/${this.activity.activity_id}/`);
+        this.isRightOrganizer = this.activity.organizer_id === localStorage.getItem('username');
+        // 更新点击数
+        await axios.post(`http://127.0.0.1:8000/api/activity/click/${this.activity.activity_id}/`);
 
-            const userId = localStorage.getItem('username');
-            const registrationsResponse = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/registrations/${userId}/`);
-            if (registrationsResponse.data.some(data => data.activity_result === '已报名')) {
-                this.hasRegistered = true;
-            }
-
-            // 获取申请状态
-            const application = registrationsResponse.data.find(data => data.activity_result);
-            if (application) {
-                this.applicationStatus = application.application_result;
-            }
-        } catch (error) {
-            console.error("获取活动详情失败:", error);
+        const userId = localStorage.getItem('username');
+        const registrationsResponse = await axios.get(`http://127.0.0.1:8000/api/activity/${activityIdHash}/registrations/${userId}/`);
+        if (registrationsResponse.data.some(data => data.activity_result === '已报名')) {
+          this.hasRegistered = true;
         }
+
+        // 获取申请状态
+        const application = registrationsResponse.data.find(data => data.activity_result);
+        if (application) {
+          this.applicationStatus = application.application_result;
+        }
+
+      } catch (error) {
+        console.error("获取活动详情失败:", error);
+      }
     },
     /**
      * @description 报名参加活动

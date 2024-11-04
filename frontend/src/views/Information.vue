@@ -43,10 +43,10 @@
         </div>
 
         <div class="activity-list">
-          <div v-for="activity in activities" :key="activity.id" class="activity-row">
+          <div v-for="activity in activities" :key="activity.activity_id" class="activity-row">
             <ActivityCard :activity="activity" />
             <span>{{ activity.organizer_name }}</span>
-            <span>{{ getActivityResult(activity) }}</span>
+            <span>{{ getActivityResult(activity) }}</span> <!-- 显示活动状态 -->
           </div>
         </div>
 
@@ -107,17 +107,21 @@ export default {
      * @return {void}
      */
     async fetchActivities() {
-      const response = await axios.get(`http://127.0.0.1:8000/api/user-activities/`, {
-        params: {
-          page: this.currentPage,
-          status: this.selectedStatus,
-          search: this.searchQuery,
-          user_id: localStorage.getItem('username'), // 获取 user_id
-          user_type: localStorage.getItem('user_type'), // 获取 user_type
-        },
-      });
-      this.activities = response.data.results; // 更新活动列表
-      this.totalActivities = response.data.count; // 更新总活动数
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/api/user-activities/`, {
+          params: {
+            page: this.currentPage,
+            status: this.selectedStatus,
+            search: this.searchQuery,
+            user_id: localStorage.getItem('username'), // 获取 user_id
+            user_type: localStorage.getItem('user_type'), // 获取 user_type
+          },
+        });
+        this.activities = response.data.activities; // 更新活动列表
+        this.totalActivities = response.data.activities.length; // 更新总活动数
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+      }
     },
     /**
      * @description 根据状态过滤活动
@@ -167,10 +171,11 @@ export default {
      * @return {string} 返回活动状态
      */
     getActivityResult(activity) {
-      return this.isOrganizer
-        ? activity.organizer_activity_result // 组织者活动状态
-        : activity.volunteer_activity_result; // 志愿者活动状态
-    },
+      return activity.activity_result;
+      // return this.isOrganizer
+      //   ? activity.organizer_activity_result || '未知状态' // 组织者活动状态
+      //   : activity.volunteer_activity_result || '未知状态'; // 志愿者活动状态
+    }
   },
   mounted() {
     this.fetchActivities(); // 初始化时加载活动
@@ -271,7 +276,7 @@ export default {
 }
 
 .sidebar ul {
-  list-style-type: none; 
+  list-style-type: none;
   padding: 0;
 }
 
@@ -286,6 +291,6 @@ export default {
 }
 
 .create-activity {
-  margin-top: 20px; 
+  margin-top: 20px;
 }
 </style>
