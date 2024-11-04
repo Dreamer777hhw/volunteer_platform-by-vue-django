@@ -24,22 +24,12 @@ class ActivitySerializer(serializers.ModelSerializer):
     organizer_name = serializers.CharField(source='organizer.organizer_name', read_only=True)
     registered_volunteers = serializers.IntegerField(source='activitystatus.registered_volunteers', read_only=True)
     activity_status = serializers.CharField(source='activitystatus.activity_status', read_only=True)
-    volunteer_activity_result = serializers.SerializerMethodField()
-    organizer_activity_result = serializers.SerializerMethodField()
+    volunteer_activity_result = serializers.CharField(source='volunteeractivity.activity_result', read_only=True)
+    organizer_activity_result = serializers.CharField(source='organizeractivity.activity_result', read_only=True)
 
     class Meta:
         model = Activity
         fields = '__all__'
-
-    def get_volunteer_activity_result(self, obj):
-        # 根据条件返回志愿者的活动结果
-        volunteer_activity = obj.volunteeractivity_set.first()  # 假设一对多关系
-        return volunteer_activity.activity_result if volunteer_activity else None
-
-    def get_organizer_activity_result(self, obj):
-        # 根据条件返回组织者的活动结果
-        organizer_activity = obj.organizeractivity_set.first()  # 假设一对多关系
-        return organizer_activity.activity_result if organizer_activity else None
 
 class ActivityStatusSerializer(serializers.ModelSerializer):
     class Meta:

@@ -3,7 +3,7 @@
     * @Author: infinity
     * @Date: 2024-10-24 
     * @LastEditors: dreamer777hhw
-    * @LastEditTime: 2024-11-03
+    * @LastEditTime: 2024-11-04
  -->
 
 <template>
@@ -98,6 +98,11 @@ export default {
           this.applications = response.data.applications;
           this.acceptedVolunteers = response.data.registered_volunteers;
           this.totalVolunteers = response.data.accepted_volunteers;
+
+          // 检查是否需要拒绝剩余未审核的申请
+          if (this.acceptedVolunteers >= this.totalVolunteers) {
+            this.rejectRemainingUnreviewed();
+          }
         })
         .catch(error => {
           console.error('获取申请记录失败:', error);
@@ -108,6 +113,10 @@ export default {
         .then(response => {
           this.fetchVolunteerApplications();
           console.log('申请已同意:', response.data.message);
+          // 检查是否已达名额上限
+          if (this.acceptedVolunteers + 1 > this.totalVolunteers) {
+            this.rejectRemainingUnreviewed();
+          }
         })
         .catch(error => {
           console.error('同意申请失败:', error);
@@ -143,9 +152,25 @@ export default {
           console.error('一键拒绝失败:', error);
         });
     },
+    rejectRemainingUnreviewed() {
+      this.applications.forEach(application => {
+        if (application.application_result === '待审核') {
+          axios.patch(`http://127.0.0.1:8000/api/applications/reject/${application.application_id}/`, { application_result: '未通过' })
+            .then(response => {
+              console.log('申请已拒绝:', response.data.message);
+              // 更新本地应用状态
+              application.application_result = '未通过';
+            })
+            .catch(error => {
+              console.error('拒绝申请失败:', error);
+            });
+        }
+      });
+    }
   }
 };
 </script>
+
 
 <style scoped>
 .check-volunteer-container {
