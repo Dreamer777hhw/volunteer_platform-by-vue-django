@@ -1,70 +1,57 @@
 <!-- 
     * @FileDescription: 轮播图组件，包含图片轮播、左右切换按钮和指示点功能
     * @Author: infinity
-    * @Date: 2024-10-22 
+    * @Date: 2024-10-21 
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-22 
+    * @LastEditTime: 2024-11-04
  -->
-
+ 
 <template>
-  <div class="banner-container">
-    <div class="banner">
-      <div class="banner-images">
-        <img
-          v-for="(image, index) in images"
-          :key="index"
-          :src="`/activity-images/${image.name}`"
-          :alt="image.alt"
-          :class="{ active: currentImage === index }"
-          @click="navigateToDetail(image.link)"
-        />
-        <button class="prev" @click="prevImage">‹</button>
-        <button class="next" @click="nextImage">›</button>
-      </div>
-      <div class="banner-dots">
-        <span
-          v-for="(image, index) in images"
-          :key="index"
-          :class="{ active: currentImage === index }"
-          @click="goToImage(index)"
-        ></span>
-      </div>
+  <div class="banner">
+    <!-- 图片轮播 -->
+    <div class="banner-images">
+      <img
+        v-for="(image, index) in images"
+        :key="index"
+        :src="`/banner-images/2024-10-21-1/${image.name}`"
+        :alt="image.alt"
+        :class="{ active: currentImage === index }"
+        @click="navigateToDetail(image.link)"
+      />
+      <!-- 左右切换按钮 -->
+      <button class="prev" @click="prevImage">‹</button>
+      <button class="next" @click="nextImage">›</button>
+    </div>
+    <!-- 指示点 -->
+    <div class="banner-dots">
+      <span
+        v-for="(image, index) in images"
+        :key="index"
+        :class="{ active: currentImage === index }"
+        @click="goToImage(index)"
+      ></span>
     </div>
   </div>
 </template>
-
+ 
 <script>
-import axios from 'axios';
 export default {
   name: 'BannerComponent',
   data() {
     return {
       images: [
-        // TODO: 选择合适的分辨率图片 从后端获取相应的数据
-        // { name: 'banner-1.jpg', alt: 'Banner 1', link: '/activity/detail/ABCDEFG' },
-        // { name: 'banner-2.jpg', alt: 'Banner 2', link: '/activity/detail/HIJKLMN' },
-        // { name: 'banner-3.jpg', alt: 'Banner 3', link: '/activity/detail/OPQRSTU' },
-        // { name: 'banner-4.jpg', alt: 'Banner 4', link: '/activity/detail/VWXYZAB' },
-        // { name: 'banner-5.jpg', alt: 'Banner 5', link: '/activity/detail/CDEFGHI' },
+        // TODO: 选择合适的分辨率图片
+        { name: 'banner-1.jpg', alt: 'Banner 1', link: '/activity/detail/123456' },
+        { name: 'banner-2.jpg', alt: 'Banner 2', link: '/activity/detail/234567' },
+        { name: 'banner-3.jpg', alt: 'Banner 3', link: '/activity/detail/345678' },
+        { name: 'banner-4.jpg', alt: 'Banner 4', link: '/activity/detail/456789' },
+        { name: 'banner-5.jpg', alt: 'Banner 5', link: '/activity/detail/567890' },
       ],
       currentImage: 0,
       intervalId: null,
     };
   },
   methods: {
-    async fetchUpcomingActivities() {
-      try {
-        const response = await axios.get('http://127.0.0.1:8000/api/upcoming-activities/');
-        // 假设返回的活动数据包含 activity_name 和 link
-        this.images = response.data.map(activity => ({
-          name: `${activity.name}.png`,
-          alt: activity.name,
-          link: activity.link
-        }));
-      } catch (error) {
-        console.error("获取即将开始的活动失败:", error);
-      }
-    },
     /**
      * 切换到下一张图片
      */
@@ -115,34 +102,24 @@ export default {
     },
   },
   mounted() {
-    this.startAutoSlide();
-    this.fetchUpcomingActivities();
+    this.startAutoSlide(); 
   },
   beforeUnmount() {
     this.stopAutoSlide(); 
   },
 };
 </script>
-
+ 
 <style scoped>
-.banner-container {
-  justify-content: center;
-}
-
 .banner {
   position: relative;
-  height: 330px;
+  margin: 0 auto;
   width: 1200px;
+  height: 330px;
   overflow: hidden;
   border-radius: 15px; 
 }
-
-.banner-images {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-
+ 
 .banner-images img {
   width: 100%;
   height: 100%;
@@ -151,19 +128,11 @@ export default {
   transition: opacity 0.5s ease-in-out;
   border-radius: 15px; 
 }
-
+ 
 .banner-images img.active {
   display: block;
 }
-
-.banner-images img.active {
-  opacity: 1;
-}
-
-.banner-images img:not(.active) {
-  opacity: 0;
-}
-
+ 
 .banner button {
   position: absolute;
   top: 50%;
@@ -177,15 +146,15 @@ export default {
   z-index: 1;
   border-radius: 50%; 
 }
-
+ 
 .prev {
   left: 10px;
 }
-
+ 
 .next {
   right: 10px;
 }
-
+ 
 .banner-dots {
   position: absolute;
   bottom: 10px;
@@ -194,7 +163,7 @@ export default {
   display: flex;
   gap: 10px;
 }
-
+ 
 .banner-dots span {
   width: 10px;
   height: 10px;
@@ -202,7 +171,7 @@ export default {
   border-radius: 50%;
   cursor: pointer;
 }
-
+ 
 .banner-dots span.active {
   background-color: white;
 }
