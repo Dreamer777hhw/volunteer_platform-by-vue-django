@@ -3,7 +3,7 @@
     * @Author: infinity
     * @Date: 2024-10-29
     * @LastEditors: infinity 
-    * @LastEditTime: 2024-10-29 
+    * @LastEditTime: 2024-11-04
  -->
 
 <template>
@@ -71,7 +71,6 @@ export default {
   text-decoration: none;
   color: inherit;
   transition: transform 0.2s;
-  //flex-direction: column;
 }
 
 .activity-card:hover {

@@ -1,3 +1,10 @@
+<!--
+    * @FileDescription: 即将到来的活动组件，展示即将到来的活动列表
+    * @Author: Dreamer777hhw
+    * @Date: 2024-11-01
+    * @LastEditors: infinity
+    * @LastEditTime: 2024-11-04
+ -->
 <template>
   <div class="upcoming-activity-container">
     <h2>即将到来的活动</h2>
