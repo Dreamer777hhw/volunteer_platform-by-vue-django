@@ -617,17 +617,10 @@ class UpcomingActivitiesView(APIView):
         # 获取开始时间在未来一周内的活动
         upcoming_activities = Activity.objects.filter(activity_start_time__gte=now).order_by('activity_start_time')[:5]
 
-        # 构建响应数据
-        activities_data = [
-            {
-                'name': activity.activity_name,
-                'start_time': activity.activity_start_time,
-                'link': f'/activity/detail/{activity.activity_id}'  # 假设使用活动 ID 作为链接
-            }
-            for activity in upcoming_activities
-        ]
+        # 序列化活动数据
+        serializer = ActivitySerializer(upcoming_activities, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return Response(activities_data, status=status.HTTP_200_OK)
 
 class VolunteerApplicationView(APIView):
     def get(self, request, activity_id):
