@@ -1,7 +1,7 @@
-<!-- 
-    * @FileDescription: 检查志愿者申请页面，用户可以在此页面查看和管理志愿者申请 
+<!--
+    * @FileDescription: 检查志愿者申请页面，用户可以在此页面查看和管理志愿者申请
     * @Author: infinity
-    * @Date: 2024-10-24 
+    * @Date: 2024-10-24
     * @LastEditors: dreamer777hhw
     * @LastEditTime: 2024-11-04
  -->
@@ -33,8 +33,9 @@
           <span>手机号</span>
           <span>状态</span>
         </div>
+
         <div class="volunteer-list">
-          <div v-for="(application, index) in applications" :key="application.application_id" class="volunteer-row">
+          <div v-for="(application, index) in paginatedApplications" :key="application.application_id" class="volunteer-row">
             <span>{{ volunteers[index].name }}</span>
             <span>{{ volunteers[index].student_id }}</span>
             <span>{{ volunteers[index].major }}</span>
@@ -56,6 +57,24 @@
               </template>
             </span>
           </div>
+        </div>
+
+        <div class="pagination">
+          <button
+            @click="changePage(currentPage - 1)"
+            :disabled="currentPage === 1"
+          >
+            上一页
+          </button>
+
+          <span>第 {{ currentPage }} 页</span>
+
+          <button
+            @click="changePage(currentPage + 1)"
+            :disabled="currentPage === totalPages"
+          >
+            下一页
+          </button>
         </div>
 
         <div class="bulk-action-buttons">
@@ -84,46 +103,60 @@ export default {
       applications: [],
       acceptedVolunteers: 0,
       totalVolunteers: 0,
+      currentPage: 1, // 当前页码
+      itemsPerPage: 10, // 每页显示的项数
+      totalPages: 0, // 总页数
     };
+  },
+  computed: {
+    // 获取当前页的数据
+    paginatedApplications() {
+      // const start = (this.currentPage - 1) * this.itemsPerPage;
+      // const end = this.currentPage * this.itemsPerPage;
+      return this.applications.slice(0, 9); // 获取当前页的数据
+    },
   },
   mounted() {
     this.fetchVolunteerApplications();
   },
   methods: {
+    // 请求获取志愿者申请数据
     fetchVolunteerApplications() {
-      axios.get(`http://127.0.0.1:8000/api/applications/${this.activity_id}/`)
+      axios.get(`http://127.0.0.1:8000/api/applications/${this.activity_id}/?page=${this.currentPage}&page_size=${this.itemsPerPage}`)
         .then(response => {
           this.activityName = response.data.activity_name;
           this.volunteers = response.data.volunteers;
           this.applications = response.data.applications;
           this.acceptedVolunteers = response.data.registered_volunteers;
           this.totalVolunteers = response.data.accepted_volunteers;
-
-          // 检查是否需要拒绝剩余未审核的申请
-          if (this.acceptedVolunteers >= this.totalVolunteers) {
-            this.rejectRemainingUnreviewed();
-          }
+          this.currentPage = response.data.current_page;
+          this.totalPages = response.data.total_pages;
         })
         .catch(error => {
           console.error('获取申请记录失败:', error);
         });
     },
-    approveVolunteer(studentId) {
-      axios.patch(`http://127.0.0.1:8000/api/applications/approve/${studentId}/`, { application_result: '已通过' })
+    // 页面跳转
+    changePage(pageNumber) {
+      if (pageNumber > 0 && pageNumber <= this.totalPages) {
+        this.currentPage = pageNumber;
+        this.fetchVolunteerApplications(); // 重新获取分页数据
+      }
+    },
+    // 同意志愿者申请
+    approveVolunteer(applicationId) {
+      axios.patch(`http://127.0.0.1:8000/api/applications/approve/${applicationId}/`, { application_result: '已通过' })
         .then(response => {
           this.fetchVolunteerApplications();
           console.log('申请已同意:', response.data.message);
-          // 检查是否已达名额上限
-          if (this.acceptedVolunteers + 1 > this.totalVolunteers) {
-            this.rejectRemainingUnreviewed();
-          }
         })
         .catch(error => {
           console.error('同意申请失败:', error);
         });
     },
-    rejectVolunteer(studentId) {
-      axios.patch(`http://127.0.0.1:8000/api/applications/reject/${studentId}/`, { application_result: '未通过' })
+    // 拒绝志愿者申请
+    rejectVolunteer(applicationId) {
+      axios.patch(`http://127.0.0.1:8000/api/applications/reject/${applicationId}/`, { application_result: '未通过' })
         .then(response => {
           this.fetchVolunteerApplications();
           console.log('申请已拒绝:', response.data.message);
@@ -132,6 +165,7 @@ export default {
           console.error('拒绝申请失败:', error);
         });
     },
+    // 一键同意所有申请
     approveAll() {
       axios.patch(`http://127.0.0.1:8000/api/applications/approve_all/${this.activity_id}/`)
         .then(response => {
@@ -142,6 +176,7 @@ export default {
           console.error('一键同意失败:', error);
         });
     },
+    // 一键拒绝所有申请
     rejectAll() {
       axios.patch(`http://127.0.0.1:8000/api/applications/reject_all/${this.activity_id}/`)
         .then(response => {
@@ -152,25 +187,9 @@ export default {
           console.error('一键拒绝失败:', error);
         });
     },
-    rejectRemainingUnreviewed() {
-      this.applications.forEach(application => {
-        if (application.application_result === '待审核') {
-          axios.patch(`http://127.0.0.1:8000/api/applications/reject/${application.application_id}/`, { application_result: '未通过' })
-            .then(response => {
-              console.log('申请已拒绝:', response.data.message);
-              // 更新本地应用状态
-              application.application_result = '未通过';
-            })
-            .catch(error => {
-              console.error('拒绝申请失败:', error);
-            });
-        }
-      });
-    }
-  }
+  },
 };
 </script>
-
 
 <style scoped>
 .check-volunteer-container {
@@ -265,6 +284,37 @@ export default {
 }
 
 .bulk-button {
+  font-size: 1rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.3rem 1rem;
+  margin: 0 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagination button:hover {
+  background-color: #0056b3;
+}
+
+.pagination button:disabled {
+  background-color: #d6d6d6;
+  cursor: not-allowed;
+}
+
+.pagination span {
   font-size: 1rem;
 }
 </style>

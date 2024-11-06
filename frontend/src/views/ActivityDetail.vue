@@ -30,13 +30,13 @@
               <p v-if="activity.application_requirements">报名要求: {{ activity.application_requirements }}</p>
 <!--              <p>总点击数: {{ activity.total_clicks }}</p>-->
 
-              <div v-if="isVolunteer && !isFull">
+              <div v-if="isVolunteer">
                 <p v-if="applicationStatus === '已通过'" class="status-approved">申请已通过</p>
                 <p v-if="applicationStatus === '未通过'" class="status-denied">申请未通过</p>
-                <button v-if="applicationStatus === null && !hasRegistered" class="register-button" @click="registerForActivity">
+                <button v-if="!isFull && applicationStatus === null && !hasRegistered" class="register-button" @click="registerForActivity">
                   报名
                 </button>
-                <button v-if="hasRegistered && applicationStatus === null" class="register-button" @click="cancelRegistration">
+                <button v-if="!isFull && hasRegistered && applicationStatus === '待审核'" class="register-button" @click="cancelRegistration">
                   取消报名
                 </button>
               </div>

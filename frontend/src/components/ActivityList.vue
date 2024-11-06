@@ -2,8 +2,8 @@
     * @FileDescription: 活动列表组件，包含活动筛选、排序和展示功能
     * @Author: infinity
     * @Date: 2024-10-22
-    * @LastEditors: infinity
-    * @LastEditTime: 2024-11-04
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-11-06
  -->
 
 <template>
@@ -75,22 +75,29 @@ export default {
     filteredActivities() {
       return this.activities
         .filter(activity => {
+          // 标签过滤
           if (this.selectedLabels.length > 0 && !this.selectedLabels.includes(activity.activity_tags)) {
             return false;
           }
+          // 状态过滤
           if (this.selectedStatuses.length > 0 && !this.selectedStatuses.includes(activity.activity_status)) {
             return false;
           }
+          // 搜索过滤
           if (this.searchQuery && !activity.activity_name.includes(this.searchQuery)) {
             return false;
           }
           return true;
         })
         .sort((a, b) => {
+          // 排序逻辑
           if (this.sortBy === "time") {
             return new Date(a.activity_start_time) - new Date(b.activity_start_time);
           } else if (this.sortBy === "participants") {
-            return b.accepted_volunteers - a.accepted_volunteers;
+            // 计算剩余报名人数
+            const remainingA = a.accepted_volunteers - a.registered_volunteers;
+            const remainingB = b.accepted_volunteers - b.registered_volunteers;
+            return remainingB - remainingA; // 从高到低
           }
         });
     },
