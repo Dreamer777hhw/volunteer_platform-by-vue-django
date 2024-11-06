@@ -15,6 +15,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date
+from django.core.paginator import Paginator
 from datetime import datetime
 import time
 import os
@@ -651,14 +652,14 @@ class UpdateActivityStatusView(APIView):
                 # 判断活动的状态并更新
                 if now < application_start_time:
                     activity_status.activity_status = '未开始'
-                elif now < application_end_time and activity_status.registered_volunteers < activity_status.accepted_volunteers:
-                    activity_status.activity_status = '招募中'
-                elif activity_status.registered_volunteers >= activity_status.accepted_volunteers:
-                    activity_status.activity_status = '已招满'
                 elif now >= activity_start_time and now < activity_end_time:
                     activity_status.activity_status = '进行中'
                 elif now >= activity_end_time:
                     activity_status.activity_status = '已结束'
+                elif now < application_end_time and activity_status.registered_volunteers < activity_status.accepted_volunteers:
+                    activity_status.activity_status = '招募中'
+                elif activity_status.registered_volunteers >= activity_status.accepted_volunteers:
+                    activity_status.activity_status = '已招满'
                 else:
                     activity_status.activity_status = '已取消'  # 其他情况，视为已取消
 
@@ -694,11 +695,10 @@ class ActivityRegistrationsView(APIView):
             {
                 "student_id": registration.student_id,
                 "activity_result": registration.activity_result,
-                "application_result": activityapplication.first().application_result
+                "application_result": activityapplication.first().application_result if activityapplication.first() else None
             }
             for registration in registrations
         ]
-
         if not registration_data:
             return Response({'message': '未找到该用户的报名记录。'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -724,8 +724,16 @@ class VolunteerApplicationView(APIView):
             # 获取与活动相关的申请
             applications = ActivityApplication.objects.filter(activity=activity)
 
-            # 序列化申请数据
-            application_serializer = ActivityApplicationSerializer(applications, many=True)
+            # 分页参数
+            page = request.query_params.get('page', 1)  # 默认为第一页
+            page_size = request.query_params.get('page_size', 10)  # 每页显示10个条目，可以通过查询参数动态调整
+
+            # 分页应用申请
+            application_paginator = Paginator(applications, page_size)
+            application_page = application_paginator.get_page(page)
+
+            # 序列化分页后的申请数据
+            application_serializer = ActivityApplicationSerializer(application_page, many=True)
 
             # 序列化活动数据
             activity_serializer = ActivitySerializer(activity)
@@ -733,9 +741,15 @@ class VolunteerApplicationView(APIView):
             activitystatus = ActivityStatus.objects.get(activity=activity)
 
             # 获取申请中志愿者的相关信息
-            volunteer_ids = [app.student.student_id for app in applications]
+            volunteer_ids = [app.student.student_id for app in application_page]
             volunteers = Volunteer.objects.filter(student_id__in=volunteer_ids)
-            volunteer_serializer = VolunteerSerializer(volunteers, many=True)
+
+            # 分页志愿者数据
+            volunteer_paginator = Paginator(volunteers, page_size)
+            volunteer_page = volunteer_paginator.get_page(page)
+
+            # 序列化分页后的志愿者数据
+            volunteer_serializer = VolunteerSerializer(volunteer_page, many=True)
 
             # 返回数据
             return Response({
@@ -744,6 +758,8 @@ class VolunteerApplicationView(APIView):
                 'volunteers': volunteer_serializer.data,
                 'registered_volunteers': activitystatus.registered_volunteers,
                 'accepted_volunteers': activitystatus.accepted_volunteers,
+                'current_page': application_page.number,
+                'total_pages': application_paginator.num_pages,
             }, status=status.HTTP_200_OK)
 
         except Activity.DoesNotExist:
@@ -784,7 +800,6 @@ class RejectVolunteerApplicationView(APIView):
             application = ActivityApplication.objects.get(application_id=application_id)
             activityid = application.activity.activity_id
             activitystatus = ActivityStatus.objects.get(activity_id=activityid)
-            activitystatus.registered_volunteers -= 1
             activitystatus.save()
             # 更新申请结果为 "未通过"
             application.application_result = '未通过'
@@ -898,7 +913,6 @@ class CancelRegistrationView(APIView):
             activity = Activity.objects.get(activity_id=activity_id_hash)
             volunteer = Volunteer.objects.get(student_id=user_id)  # 使用正确的字段名
             activitystatus = ActivityStatus.objects.get(activity=activity)
-            activitystatus.registered_volunteers -= 1
             # 查找并删除报名记录
             application = ActivityApplication.objects.get(activity=activity, student=volunteer)
             application.delete()  # 删除报名记录
