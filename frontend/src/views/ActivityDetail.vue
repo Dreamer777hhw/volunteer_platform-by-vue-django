@@ -2,8 +2,8 @@
     * @FileDescription: 活动详情页面，展示活动的详细信息 
     * @Author: infinity
     * @Date: 2024-10-24 
-    * @LastEditors: infinity
-    * @LastEditTime: 2024-11-04
+    * @LastEditors: dreamer777hhw
+    * @LastEditTime: 2024-11-06
  -->
 
 <template>
@@ -70,6 +70,7 @@
 <script>
 import NavBar from '@/components/NavBar.vue';
 import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
 export default {
   name: 'ActivityDetailView',
@@ -143,14 +144,25 @@ export default {
       const activityIdHash = this.$route.params.activity_id_hash;
       try {
         const response = await axios.post(`http://127.0.0.1:8000/api/activity/register/${activityIdHash}/${localStorage.getItem('username')}/`);
-        alert(response.data.message);
+        // 用 ElMessage 显示成功信息
+        ElMessage({
+          message: response.data.message,
+          type: 'success',
+        });
         this.hasRegistered = true;
         this.fetchActivityDetail();
       } catch (error) {
         if (error.response) {
-          alert(error.response.data.error);
+          // 用 ElMessage 显示错误信息
+          ElMessage({
+            message: error.response.data.error,
+            type: 'error',
+          });
         } else {
-          alert('报名失败，请稍后再试！');
+          ElMessage({
+            message: '报名失败，请稍后再试！',
+            type: 'error',
+          });
           console.error("报名失败:", error);
         }
       }
@@ -164,19 +176,31 @@ export default {
       try {
         const userId = localStorage.getItem('username');
         const response = await axios.post(`http://127.0.0.1:8000/api/activity/cancel/${activityIdHash}/${userId}/`);
-        alert(response.data.message);
+        // 用 ElMessage 显示成功信息
+        ElMessage({
+          message: response.data.message,
+          type: 'success',
+        });
         this.hasRegistered = false; // 更新状态为未报名
         this.fetchActivityDetail(); // 重新获取活动详情以更新数据
         window.location.reload(); // 刷新页面
       } catch (error) {
         if (error.response) {
-          alert(error.response.data.error);
+          // 用 ElMessage 显示错误信息
+          ElMessage({
+            message: error.response.data.error,
+            type: 'error',
+          });
         } else {
-          alert('取消报名失败，请稍后再试！');
+          ElMessage({
+            message: '取消报名失败，请稍后再试！',
+            type: 'error',
+          });
           console.error("取消报名失败:", error);
         }
       }
     },
+
     /**
      * @description 跳转到修改活动页面
      * @return {void}
