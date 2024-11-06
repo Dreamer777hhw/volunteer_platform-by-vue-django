@@ -726,36 +726,37 @@ class VolunteerApplicationView(APIView):
 
             # 分页参数
             page = request.query_params.get('page', 1)  # 默认为第一页
-            page_size = request.query_params.get('page_size', 10)  # 每页显示10个条目，可以通过查询参数动态调整
+            page_size = int(request.query_params.get('page_size', 10))  # 每页显示10个条目，可以通过查询参数动态调整
 
             # 分页应用申请
             application_paginator = Paginator(applications, page_size)
             application_page = application_paginator.get_page(page)
 
-            # 序列化分页后的申请数据
-            application_serializer = ActivityApplicationSerializer(application_page, many=True)
+            # 获取与申请相关的志愿者数据
+            volunteer_ids = [app.student.student_id for app in application_page]
+            volunteers = Volunteer.objects.filter(student_id__in=volunteer_ids)
+
+            # 创建志愿者字典，方便根据 student_id 查找志愿者
+            volunteer_dict = {volunteer.student_id: volunteer for volunteer in volunteers}
+
+            # 将每个申请与对应的志愿者结合
+            application_volunteer_data = []
+            for application in application_page:
+                volunteer = volunteer_dict.get(application.student.student_id)
+                application_volunteer_data.append({
+                    'application': ActivityApplicationSerializer(application).data,  # 使用对应的序列化
+                    'volunteer': VolunteerSerializer(volunteer).data if volunteer else None  # 如果没有对应的志愿者返回 None
+                })
 
             # 序列化活动数据
             activity_serializer = ActivitySerializer(activity)
 
             activitystatus = ActivityStatus.objects.get(activity=activity)
 
-            # 获取申请中志愿者的相关信息
-            volunteer_ids = [app.student.student_id for app in application_page]
-            volunteers = Volunteer.objects.filter(student_id__in=volunteer_ids)
-
-            # 分页志愿者数据
-            volunteer_paginator = Paginator(volunteers, page_size)
-            volunteer_page = volunteer_paginator.get_page(page)
-
-            # 序列化分页后的志愿者数据
-            volunteer_serializer = VolunteerSerializer(volunteer_page, many=True)
-
             # 返回数据
             return Response({
                 'activity_name': activity_serializer.data['activity_name'],
-                'applications': application_serializer.data,
-                'volunteers': volunteer_serializer.data,
+                'applications_and_volunteers': application_volunteer_data,
                 'registered_volunteers': activitystatus.registered_volunteers,
                 'accepted_volunteers': activitystatus.accepted_volunteers,
                 'current_page': application_page.number,
