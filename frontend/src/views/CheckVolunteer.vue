@@ -34,30 +34,29 @@
           <span>状态</span>
         </div>
 
-        <div class="volunteer-list">
-          <div v-for="(application, index) in paginatedApplications" :key="application.application_id" class="volunteer-row">
-            <span>{{ volunteers[index].name }}</span>
-            <span>{{ volunteers[index].student_id }}</span>
-            <span>{{ volunteers[index].major }}</span>
-            <span>{{ volunteers[index].school }}</span>
-            <span>{{ volunteers[index].email }}</span>
-            <span>{{ volunteers[index].phone }}</span>
+        <div v-for="(item, index) in applicationVolunteerData" :key="index" class="volunteer-row">
+            <span>{{ item.volunteer.name }}</span>
+            <span>{{ item.volunteer.student_id }}</span>
+            <span>{{ item.volunteer.major }}</span>
+            <span>{{ item.volunteer.school }}</span>
+            <span>{{ item.volunteer.email }}</span>
+            <span>{{ item.volunteer.phone }}</span>
             <span>
-              <template v-if="application.application_result === '已通过'">
+              <template v-if="item.application.application_result === '已通过'">
                 已通过
               </template>
-              <template v-else-if="application.application_result === '未通过'">
+              <template v-else-if="item.application.application_result === '未通过'">
                 未通过
               </template>
               <template v-else>
                 <div class="action-buttons">
-                  <button @click="approveVolunteer(application.application_id)">同意</button>
-                  <button @click="rejectVolunteer(application.application_id)">拒绝</button>
+                  <button @click="approveVolunteer(item.application.application_id)">同意</button>
+                  <button @click="rejectVolunteer(item.application.application_id)">拒绝</button>
                 </div>
               </template>
             </span>
-          </div>
         </div>
+
 
         <div class="pagination">
           <button
@@ -106,6 +105,7 @@ export default {
       currentPage: 1, // 当前页码
       itemsPerPage: 10, // 每页显示的项数
       totalPages: 0, // 总页数
+      applicationVolunteerData: [],
     };
   },
   computed: {
@@ -125,8 +125,7 @@ export default {
       axios.get(`http://127.0.0.1:8000/api/applications/${this.activity_id}/?page=${this.currentPage}&page_size=${this.itemsPerPage}`)
         .then(response => {
           this.activityName = response.data.activity_name;
-          this.volunteers = response.data.volunteers;
-          this.applications = response.data.applications;
+          this.applicationVolunteerData = response.data.applications_and_volunteers;
           this.acceptedVolunteers = response.data.registered_volunteers;
           this.totalVolunteers = response.data.accepted_volunteers;
           this.currentPage = response.data.current_page;
