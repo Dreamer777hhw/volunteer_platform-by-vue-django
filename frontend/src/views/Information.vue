@@ -111,14 +111,15 @@ export default {
         const response = await axios.get(`http://127.0.0.1:8000/api/user-activities/`, {
           params: {
             page: this.currentPage,
+            page_size: this.activitiesPerPage,  // 显示的每页活动数
             status: this.selectedStatus,
             search: this.searchQuery,
             user_id: localStorage.getItem('username'), // 获取 user_id
             user_type: localStorage.getItem('user_type'), // 获取 user_type
           },
         });
-        this.activities = response.data.activities; // 更新活动列表
-        this.totalActivities = response.data.activities.length; // 更新总活动数
+        this.activities = response.data.results; // 更新活动列表
+        this.totalActivities = response.data.count; // 更新总活动数
       } catch (error) {
         console.error('Error fetching activities:', error);
       }
