@@ -150,11 +150,10 @@ activity_ids = []  # 保存已插入的活动 ID
 student_ids = []  # 保存已插入的志愿者 ID
 organizer_ids = []  # 保存已插入的组织者 ID
 
-def random_date(n = -1, m = 1):
-    # 生成n年前今天到m年后今天之间的随机日期
-    start_date = datetime.date.today().replace(year=datetime.date.today().year + n)
-    end_date = datetime.date.today().replace(year=datetime.date.today().year + m)
-    return start_date + (end_date - start_date) * random.random()
+def random_date(n = -30, m = 30):
+    # 生成n天前到n天后之间的随机日期
+    return datetime.date.today() + datetime.timedelta(days=random.randint(n, m))
+
 
 def random_name():
     return random.choice(LAST_NAMES) + random.choice(FIRST_NAMES)
@@ -171,8 +170,8 @@ def create_random_volunteer():
     
     password = PASSWORD
 
-    # 生成申请日期在去年今天到今年今天之间
-    application_date = random_date(-1, 0)
+    # 生成申请日期在上个星期到今天之间
+    application_date = random_date(-7, 0)
 
     labor_hours = random.randint(0, 100)
     # 调整偏好值
@@ -197,7 +196,7 @@ def create_random_organizer():
     # 生成随机密码（6位数字）
     password = PASSWORD
 
-    application_date = random_date(-1, 0)
+    application_date = random_date(-7, 0)
 
     token = ''
 
@@ -218,10 +217,10 @@ def create_random_activity(organizer_id):
     activity_image_path = f"/activity-images/activity{random.randint(1,30)}.png"
     application_requirements = lorem.sentence()
 
-    application_start_time = random_date(-1, 1)
-    application_end_time = application_start_time + datetime.timedelta(days=random.randint(1, 10))
-    activity_start_time = application_end_time + datetime.timedelta(days=10)
-    activity_end_time = activity_start_time + datetime.timedelta(days=random.randint(1, 10))
+    application_start_time = random_date(-10, 5)
+    application_end_time = application_start_time + datetime.timedelta(days=random.randint(1, 7))
+    activity_start_time = application_end_time + datetime.timedelta(days=2)
+    activity_end_time = activity_start_time + datetime.timedelta(days=random.randint(1, 3))
 
     estimated_volunteer_hours = random.randint(1, 10)
 
@@ -255,7 +254,7 @@ def insert_data():
             cursor.execute("INSERT INTO api_volunteer (student_id, name, school, major, email, phone, password, application_date, labor_hours, type_preference, duration_preference, token, token_expiration) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", volunteer_data)
 
         # 插入随机组织者
-        for i in range(10):
+        for i in range(20):
             organizer_data = create_random_organizer()
             organizer_ids.append(organizer_data[0])
             cursor.execute("INSERT INTO api_organizer (organizer_id, organizer_name, account, password, application_date, token, token_expiration) VALUES (%s, %s, %s, %s, %s, %s, %s)", organizer_data)
@@ -263,7 +262,7 @@ def insert_data():
             organizer_id = organizer_data[0]  # 获取组织者 ID
 
             # 插入随机活动
-            for j in range(random.randint(1, 10)):
+            for j in range(random.randint(1, 30)):
                 activity_data = create_random_activity(organizer_id)  # 使用组织者 ID
                 activity_ids.append(activity_data[0])
                 cursor.execute("INSERT INTO api_activity (activity_id, activity_name, activity_description, activity_tags, activity_image_path, application_requirements, application_start_time, application_end_time, activity_start_time, activity_end_time, estimated_volunteer_hours, activity_location, contact_name, contact_phone, organizer_id, accepted_volunteers, labor_hours, sutuo, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", activity_data)
