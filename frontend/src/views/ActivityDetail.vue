@@ -17,6 +17,11 @@
             <h1 class="activity-title">{{ activity.activity_name }}</h1>
             <p class="activity-time">{{ formatDateTime(activity.activity_start_time) }} - {{ formatDateTime(activity.activity_end_time) }}</p>
             <div class="activity-details">
+
+              <p v-if="isBeforeRegistration" class="status-before-registration">报名未开始</p>
+
+              <p v-if="isAfterRegistration" class="status-after-registration">报名已结束</p>
+
               <p v-if="activity.organizer">主办方: {{ activity.organizer }}</p>
               <p v-if="activity.contact_name">负责人姓名: {{ activity.contact_name }}</p>
               <p v-if="activity.contact_phone">负责人手机: {{ activity.contact_phone }}</p>
@@ -28,17 +33,17 @@
               <p v-if="activity.activity_location" class="activity-location">活动地点: {{ activity.activity_location }}</p>
               <p v-if="activity.sutuo">素拓: {{ activity.sutuo }}</p>
               <p v-if="activity.application_requirements">报名要求: {{ activity.application_requirements }}</p>
-<!--              <p>总点击数: {{ activity.total_clicks }}</p>-->
 
               <div v-if="isVolunteer">
                 <p v-if="applicationStatus === '已通过'" class="status-approved">申请已通过</p>
                 <p v-if="applicationStatus === '未通过'" class="status-denied">申请未通过</p>
-                <button v-if="!isFull && applicationStatus === null && !hasRegistered" class="register-button" @click="registerForActivity">
+                <button v-if="!isFull && applicationStatus === null && !hasRegistered && !isBeforeRegistration" class="register-button" @click="registerForActivity">
                   报名
                 </button>
                 <button v-if="!isFull && hasRegistered && applicationStatus === '待审核'" class="register-button" @click="cancelRegistration">
                   取消报名
                 </button>
+                <p v-if="isFull" class="status-isFull">报名人数已满</p>
               </div>
 
               <div v-if="isOrganizer && isRightOrganizer" class="organizer-buttons">
@@ -78,6 +83,8 @@ export default {
       applicationStatus: null, // 新增状态
       isRightOrganizer: false,
       isFull: false,
+      isBeforeRegistration: false,
+      isAfterRegistration: false,
     };
   },
   computed: {
@@ -102,6 +109,9 @@ export default {
         this.activity = response.data;
         // 检查是否是当前活动的组织者
         this.activity.organizer_id = String(this.activity.organizer_id);
+
+        this.isBeforeRegistration = this.activity.activity_status === '未开始';
+        this.isAfterRegistration = this.activity.activity_status === '已结束' || this.activity.activity_status === '进行中';
 
         this.isFull = this.activity.accepted_volunteers <= this.activity.registered_volunteers;
 
@@ -341,6 +351,21 @@ export default {
 }
 
 .status-denied {
+  color: red;
+  font-weight: bold;
+}
+
+.status-before-registration {
+  color: orange;
+  font-weight: bold;
+}
+
+.status-after-registration {
+  color: red;
+  font-weight: bold;
+}
+
+.status-isFull {
   color: red;
   font-weight: bold;
 }
