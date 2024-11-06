@@ -287,6 +287,7 @@ class RecommendActivityView(APIView):
             # 获取招募中的活动
             activities = Activity.objects.filter(
                 activitystatus__activity_status='招募中',
+                activitystatus__registered_volunteers__lt=F('activitystatus__accepted_volunteers')
             )
             activity_data = []
             # 筛选当前用户最喜爱的活动类型
@@ -315,7 +316,8 @@ class RecommendActivityView(APIView):
 
         elif tab == 'hot':
             hot_activities = Activity.objects.filter(
-                activitystatus__activity_status='进行中'
+                activitystatus__activity_status='招募中',
+                activitystatus__registered_volunteers__lt = F('activitystatus__accepted_volunteers')
             ).annotate(total_clicks=F('activitystatus__total_clicks')).order_by('-total_clicks')[:3]
 
             # 使用 ActivitySerializer 进行序列化
@@ -698,7 +700,7 @@ class UpcomingActivitiesView(APIView):
     def get(self, request):
         now = timezone.now()
         # 获取开始时间在未来一周内的活动
-        upcoming_activities = Activity.objects.filter(activity_start_time__gte=now).order_by('activity_start_time')[:5]
+        upcoming_activities = Activity.objects.filter(application_start_time__gte=now).order_by('application_start_time')[:5]
 
         # 序列化活动数据
         serializer = ActivitySerializer(upcoming_activities, many=True)
