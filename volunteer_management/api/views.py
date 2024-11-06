@@ -333,6 +333,8 @@ class UserActivityPagination(PageNumberPagination):
     max_page_size = 10
 
 class UserActivityView(APIView):
+    pagination_class = UserActivityPagination  # 在视图中使用自定义的分页器
+
     def get(self, request):
         user_id = request.GET.get('user_id')
         user_type = request.GET.get('user_type')
@@ -423,7 +425,7 @@ class UserActivityView(APIView):
                     'estimated_volunteer_hours': oa.activity.estimated_volunteer_hours,
                     'contact_name': oa.activity.contact_name,
                     'contact_phone': oa.activity.contact_phone,
-                    'organizer': oa.activity.organizer.organizer_name,
+                    'organizer_name': oa.activity.organizer.organizer_name,
                     'organizer_id': oa.activity.organizer.organizer_id,
                     'accepted_volunteers': oa.activity.activitystatus.accepted_volunteers,
                     'registered_volunteers': oa.activity.activitystatus.registered_volunteers,
@@ -438,6 +440,12 @@ class UserActivityView(APIView):
 
         else:
             return Response({'error': 'Invalid user_type'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 分页处理
+        paginator = self.pagination_class()
+        paginated_data = paginator.paginate_queryset(activities_data, request)
+        if paginated_data is not None:
+            return paginator.get_paginated_response(paginated_data)
 
         return Response({'activities': activities_data}, status=status.HTTP_200_OK)
 

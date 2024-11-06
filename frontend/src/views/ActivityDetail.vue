@@ -30,7 +30,7 @@
               <p v-if="activity.application_requirements">报名要求: {{ activity.application_requirements }}</p>
 <!--              <p>总点击数: {{ activity.total_clicks }}</p>-->
 
-              <div v-if="isVolunteer">
+              <div v-if="isVolunteer && !isFull">
                 <p v-if="applicationStatus === '已通过'" class="status-approved">申请已通过</p>
                 <p v-if="applicationStatus === '未通过'" class="status-denied">申请未通过</p>
                 <button v-if="applicationStatus === null && !hasRegistered" class="register-button" @click="registerForActivity">
@@ -77,6 +77,7 @@ export default {
       hasRegistered: false,
       applicationStatus: null, // 新增状态
       isRightOrganizer: false,
+      isFull: false,
     };
   },
   computed: {
@@ -101,6 +102,8 @@ export default {
         this.activity = response.data;
         // 检查是否是当前活动的组织者
         this.activity.organizer_id = String(this.activity.organizer_id);
+
+        this.isFull = this.activity.accepted_volunteers <= this.activity.registered_volunteers;
 
         this.isRightOrganizer = this.activity.organizer_id === localStorage.getItem('username');
         // 更新点击数
